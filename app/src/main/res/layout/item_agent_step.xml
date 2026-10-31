@@ -2,8 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
+    android:layout_marginBottom="8dp"
     android:background="@drawable/bg_card_boxy"
     android:orientation="vertical"
     android:padding="10dp">
@@ -15,29 +14,33 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/tvCommentAuthor"
+            android:id="@+id/tvStepNumber"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Zeilinger_Fan"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp"
+            android:background="@drawable/bg_tag_boxy"
+            android:paddingStart="6dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="2dp"
+            android:text="STEP 1"
+            android:textColor="@color/royal_gold"
+            android:textSize="10sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/tvAiBadge"
+            android:id="@+id/tvActionBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
-            android:background="@drawable/bg_tag_boxy"
-            android:paddingStart="4dp"
-            android:paddingTop="1dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="1dp"
-            android:text="BUDDY AI"
-            android:textColor="@color/royal_gold"
-            android:textSize="9sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:background="@drawable/bg_button_royal"
+            android:paddingStart="6dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="2dp"
+            android:text="CLICK"
+            android:textColor="@color/cyber_cyan"
+            android:textSize="10sp"
+            android:textStyle="bold" />
 
         <View
             android:layout_width="0dp"
@@ -45,23 +48,31 @@
             android:layout_weight="1" />
 
         <TextView
-            android:id="@+id/tvCommentTime"
+            android:id="@+id/tvStepTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="1h ago"
+            android:text="11:45:02"
             android:textColor="@color/text_muted"
             android:textSize="10sp" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvCommentContent"
+        android:id="@+id/tvStepThought"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Reasoning about next screen action..."
+        android:textColor="@color/text_primary"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/tvStepDetails"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:lineSpacingExtra="2dp"
-        android:text="Vienna groups tested fullerenes and even gramicidin proteins!"
+        android:text="Target: (x=540, y=960)"
         android:textColor="@color/text_secondary"
-        android:textSize="12sp" />
+        android:textSize="11sp" />
 
 </LinearLayout>
 

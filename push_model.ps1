@@ -1,4 +1,4 @@
-# PhoneAI - Local Physics Social & Physics Buddy Deployment Helper (PowerShell)
+# Mobile AI Studio - Model Deployment Helper (PowerShell)
 param (
     [string]$ModelFile = ""
 )
@@ -7,67 +7,96 @@ $AdbPath = "C:\Users\Kalpit\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 if (-not (Test-Path $AdbPath)) { $AdbPath = "adb" }
 
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "  PhoneAI - Local Physics Community & Buddy Deployment   " -ForegroundColor Cyan
+Write-Host "         Mobile AI Studio - Model Deployment            " -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
-if ($ModelFile -eq "") {
-    # Check if a model file exists
+function Is-VisionProjector([string]$name) {
+    $lower = $name.ToLower()
+    return ($lower.StartsWith("mmproj") -or $lower.Contains("mmproj") -or $lower.Contains("projector"))
+}
+
+# Auto-detect base model candidates
+$baseModelCandidate = $null
+if ($ModelFile -ne "") {
+    $baseModelCandidate = $ModelFile
+} else {
     if (Test-Path "smollm2-360m-instruct-q4_k_m.gguf") {
-        $ModelFile = "smollm2-360m-instruct-q4_k_m.gguf"
-    } elseif (Test-Path "gemma-2-2b-it-q4_k_m.gguf") {
-        $ModelFile = "gemma-2-2b-it-q4_k_m.gguf"
+        $baseModelCandidate = "smollm2-360m-instruct-q4_k_m.gguf"
     } elseif (Test-Path "qwen2.5-0.5b-instruct-q4_k_m.gguf") {
-        $ModelFile = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+        $baseModelCandidate = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+    } elseif (Test-Path "gemma-2-2b-it-q4_k_m.gguf") {
+        $baseModelCandidate = "gemma-2-2b-it-q4_k_m.gguf"
     } else {
-        $candidate = Get-ChildItem -Filter "*.gguf" | Select-Object -First 1
+        $candidate = Get-ChildItem -Filter "*.gguf" | Where-Object { -not (Is-VisionProjector $_.Name) } | Select-Object -First 1
         if ($null -ne $candidate) {
-            $ModelFile = $candidate.Name
+            $baseModelCandidate = $candidate.Name
         }
     }
 }
 
-if ($ModelFile -eq "" -or (-not (Test-Path $ModelFile))) {
-    Write-Host "[ERROR] No GGUF model file found!" -ForegroundColor Red
+# Auto-detect vision projector candidates (e.g. mmproj-GLM-OCR-Q8_0.gguf)
+$projectorCandidate = Get-ChildItem -Filter "*.gguf" | Where-Object { Is-VisionProjector $_.Name } | Select-Object -First 1
+
+$filesToPush = @()
+
+if ($null -ne $baseModelCandidate -and (Test-Path $baseModelCandidate)) {
+    $filesToPush += $baseModelCandidate
+}
+
+if ($null -ne $projectorCandidate) {
+    $filesToPush += $projectorCandidate.Name
+}
+
+if ($filesToPush.Count -eq 0) {
+    # If the user passed or only has an mmproj file
+    $anyGguf = Get-ChildItem -Filter "*.gguf" | Select-Object -First 1
+    if ($null -ne $anyGguf) {
+        $filesToPush += $anyGguf.Name
+    }
+}
+
+if ($filesToPush.Count -eq 0) {
+    Write-Host "[ERROR] No .gguf model files found in current directory!" -ForegroundColor Red
     Write-Host "Place your .gguf file here: $PWD" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Recommended compact base models for mobile:" -ForegroundColor Cyan
+    Write-Host "  1. SmolLM2-360M: https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF" -ForegroundColor Gray
+    Write-Host "  2. Qwen2.5-0.5B: https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF" -ForegroundColor Gray
     exit 1
 }
 
-$fileSizeMb = [math]::Round((Get-Item $ModelFile).Length / 1MB, 1)
-Write-Host "Selected Model: $ModelFile ($fileSizeMb MB)" -ForegroundColor Green
-Write-Host "Checking connected Android devices..." -ForegroundColor Gray
+Write-Host "Checking connected Android devices via ADB..." -ForegroundColor Gray
 & $AdbPath devices
 
-Write-Host "[1/3] Pushing $ModelFile to /data/local/tmp/..." -ForegroundColor Yellow
-& $AdbPath push $ModelFile /data/local/tmp/
+foreach ($f in $filesToPush) {
+    $isProj = Is-VisionProjector $f
+    $fileSizeMb = [math]::Round((Get-Item $f).Length / 1MB, 1)
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[Fallback] Pushing to /sdcard/Download/..." -ForegroundColor Yellow
-    & $AdbPath push $ModelFile /sdcard/Download/
-    Write-Host "Pushed to /sdcard/Download/. Open PhoneAI and tap 'Select Model File'." -ForegroundColor Green
-} else {
-    Write-Host "[2/3] Setting read permissions on /data/local/tmp/$ModelFile..." -ForegroundColor Gray
-    & $AdbPath shell chmod 644 "/data/local/tmp/$ModelFile"
+    if ($isProj) {
+        Write-Host ""
+        Write-Host "[VISION PROJECTOR] $f ($fileSizeMb MB)" -ForegroundColor Magenta
+        Write-Host "  Multimodal projection adapter detected." -ForegroundColor DarkGray
+    } else {
+        Write-Host ""
+        Write-Host "[BASE LANGUAGE MODEL] $f ($fileSizeMb MB)" -ForegroundColor Green
+    }
 
-    Write-Host "[3/3] Copying into app private storage..." -ForegroundColor Gray
-    & $AdbPath shell "run-as com.phoneai.localmodel.debug cp /data/local/tmp/$ModelFile /data/data/com.phoneai.localmodel.debug/files/$ModelFile" 2>$null
+    Write-Host "  -> Pushing to /data/local/tmp/$f..." -ForegroundColor Yellow
+    & $AdbPath push $f /data/local/tmp/
 
-    Write-Host ""
-    Write-Host "========================================================" -ForegroundColor Green
-    Write-Host "Model deployed successfully! Launch PhoneAI on your device." -ForegroundColor Green
-    Write-Host "========================================================" -ForegroundColor Green
-}
-
-# Optional: Push Wikipedia physics ZIM if present
-if (Test-Path "wikipedia_en_physics_nopic_2026-07.zim") {
-    Write-Host ""
-    Write-Host "Found Wikipedia Physics dataset (wikipedia_en_physics_nopic_2026-07.zim)." -ForegroundColor Cyan
-    $pushZim = Read-Host "Do you want to push the Wikipedia physics dataset too? (y/n)"
-    if ($pushZim -eq "y" -or $pushZim -eq "Y") {
-        Write-Host "Pushing wikipedia_en_physics_nopic_2026-07.zim..." -ForegroundColor Yellow
-        & $AdbPath push "wikipedia_en_physics_nopic_2026-07.zim" /data/local/tmp/
-        & $AdbPath shell chmod 644 "/data/local/tmp/wikipedia_en_physics_nopic_2026-07.zim"
-        & $AdbPath shell "run-as com.phoneai.localmodel.debug cp /data/local/tmp/wikipedia_en_physics_nopic_2026-07.zim /data/data/com.phoneai.localmodel.debug/files/wikipedia_en_physics_nopic_2026-07.zim" 2>$null
-        Write-Host "Wikipedia Physics dataset pushed!" -ForegroundColor Green
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [Fallback] Pushing to /sdcard/Download/..." -ForegroundColor Yellow
+        & $AdbPath push $f /sdcard/Download/
+        Write-Host "  Pushed to /sdcard/Download/. In app, tap 'Select Model File'." -ForegroundColor Green
+    } else {
+        & $AdbPath shell chmod 644 "/data/local/tmp/$f"
+        & $AdbPath shell "run-as com.phoneai.localmodel.debug cp /data/local/tmp/$f /data/data/com.phoneai.localmodel.debug/files/$f" 2>$null
+        Write-Host "  -> Successfully deployed to app storage!" -ForegroundColor Green
     }
 }
+
+Write-Host ""
+Write-Host "========================================================" -ForegroundColor Green
+Write-Host "Deployment complete! Launch Mobile AI Studio on device." -ForegroundColor Green
+Write-Host "========================================================" -ForegroundColor Green

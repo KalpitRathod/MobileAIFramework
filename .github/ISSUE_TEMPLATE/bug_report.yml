@@ -1,0 +1,63 @@
+name: 🐛 Bug Report
+description: Report an issue, crash, or unexpected behavior in MobileAI Framework
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please provide as much hardware and model detail as possible so we can reproduce and fix it.
+
+  - type: input
+    id: device_info
+    attributes:
+      label: Smartphone Device & SoC Model
+      description: What device and chipset are you running?
+      placeholder: e.g. Redmi 13C (MediaTek Helio G85) / Samsung Galaxy S23 (Snapdragon 8 Gen 2)
+    validations:
+      required: true
+
+  - type: input
+    id: android_version
+    attributes:
+      label: Android OS Version & RAM
+      description: Android version and total device RAM.
+      placeholder: e.g. Android 14, 4GB RAM (2GB ZRAM)
+    validations:
+      required: true
+
+  - type: input
+    id: model_name
+    attributes:
+      label: Model Name & Quantization
+      description: Exact model filename and quantization.
+      placeholder: e.g. smollm2-360m-instruct-q4_k_m.gguf (258MB)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem Description
+      description: A clear description of what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can maintainers reproduce the issue?
+      placeholder: |
+        1. Load model '...'
+        2. Enter prompt '...'
+        3. App stops generating / crashes
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logcat / Error Output
+      description: Copy relevant lines from logcat or crash logs.
+      render: shell

@@ -30,7 +30,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="AETHER • Physics"
+                android:text="Mobile AI Studio"
                 android:textColor="@color/text_primary"
                 android:textSize="17sp"
                 android:textStyle="bold" />
@@ -39,7 +39,7 @@
                 android:id="@+id/tvModelSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="SmolLM2-360M • Local Engine"
+                android:text="Offline Hardware-Optimized AI"
                 android:textColor="@color/royal_gold"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -81,10 +81,21 @@
             android:id="@+id/btnSwitchModel"
             android:layout_width="34dp"
             android:layout_height="34dp"
-            android:background="?selectableItemBackgroundBorderless"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Switch Model"
             android:padding="7dp"
             android:src="@drawable/ic_model" />
+
+        <!-- Cloud AI Hub Button -->
+        <ImageView
+            android:id="@+id/btnCloudHub"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Cloud AI Hub"
+            android:padding="7dp"
+            android:src="@drawable/ic_cloud" />
 
     </LinearLayout>
 
@@ -108,9 +119,10 @@
         app:layout_constraintTop_toBottomOf="@id/topBarDivider">
 
         <TextView
+            android:id="@+id/tvModelSetupTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Model Weights Required"
+            android:text="Local Model Weights Required"
             android:textColor="@color/royal_gold"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -120,7 +132,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Download smollm2-360m-instruct-q4_k_m.gguf or gemma-2-2b-it-q4_k_m.gguf to your device."
+            android:text="Select a .gguf or MediaPipe bundle to run on-device inference."
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
@@ -153,26 +165,58 @@
                 android:id="@+id/btnScanTmp"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:layout_marginEnd="6dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_royal"
                 android:text="Scan /data/local/tmp"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <Button
                 android:id="@+id/btnImportModel"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_card_boxy"
+                android:text="Select File"
+                android:textAllCaps="false"
+                android:textColor="@color/royal_gold"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnDownloadModel"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_gold"
-                android:text="Select Model File"
+                android:text="⚡ Auto-Download SmolLM2"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnSetupCloudHub"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button_royal"
+                android:text="🌐 Cloud AI Hub"
+                android:textAllCaps="false"
+                android:textColor="@color/royal_blue_light"
+                android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -184,171 +228,12 @@
         app:layout_constraintBottom_toTopOf="@id/bottomBarDivider"
         app:layout_constraintTop_toBottomOf="@id/modelSetupCard">
 
-        <!-- 1. FEED VIEW (Local Social Media) -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/viewFeed"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="visible">
-
-            <!-- Tag Filter Scroll -->
-            <HorizontalScrollView
-                android:id="@+id/scrollTags"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/royal_surface"
-                android:paddingStart="12dp"
-                android:paddingTop="8dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="8dp"
-                android:scrollbars="none"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <LinearLayout
-                    android:id="@+id/layoutTags"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/filterAll"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:background="@drawable/bg_card_boxy_gold"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
-                        android:text="#All"
-                        android:textColor="@color/royal_gold"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/filterQuantum"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
-                        android:text="#Quantum"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/filterRelativity"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
-                        android:text="#Relativity"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/filterThermodynamics"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
-                        android:text="#Thermodynamics"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/filterAstrophysics"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
-                        android:text="#Astrophysics"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/filterSolidState"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
-                        android:text="#SolidState"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvPosts"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:clipToPadding="false"
-                android:paddingTop="6dp"
-                android:paddingBottom="80dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/scrollTags" />
-
-            <!-- Floating Action Button for New Post -->
-            <LinearLayout
-                android:id="@+id/fabNewPost"
-                android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_button_gold"
-                android:clickable="true"
-                android:elevation="6dp"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:layout_marginEnd="6dp"
-                    android:src="@drawable/ic_add"
-                    app:tint="@color/black" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="New Discussion"
-                    android:textColor="@color/black"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- 2. BUDDY VIEW (AI Companion Chat) -->
+        <!-- 1. CHAT & STREAMING VIEW -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/viewBuddy"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <!-- Quick Prompts Chips -->
             <HorizontalScrollView
@@ -378,7 +263,7 @@
                         android:paddingTop="4dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="4dp"
-                        android:text="Bell's Theorem"
+                        android:text="Benchmark tok/s"
                         android:textColor="@color/royal_gold"
                         android:textSize="11sp" />
 
@@ -392,7 +277,7 @@
                         android:paddingTop="4dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="4dp"
-                        android:text="Derive E=mc²"
+                        android:text="Big-Core Pinning"
                         android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
 
@@ -406,7 +291,7 @@
                         android:paddingTop="4dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="4dp"
-                        android:text="Entropy &amp; Arrow of Time"
+                        android:text="RAM &amp; KV-Cache"
                         android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
 
@@ -420,7 +305,7 @@
                         android:paddingTop="4dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="4dp"
-                        android:text="Hawking Radiation"
+                        android:text="Phone Agent Guide"
                         android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -433,8 +318,42 @@
                 android:clipToPadding="false"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
-                app:layout_constraintBottom_toTopOf="@id/layoutChatInput"
+                app:layout_constraintBottom_toTopOf="@id/layoutAttachmentPreview"
                 app:layout_constraintTop_toBottomOf="@id/suggestionsScroll" />
+
+            <!-- Multimodal Attachment Preview Banner -->
+            <LinearLayout
+                android:id="@+id/layoutAttachmentPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/royal_card"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="6dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@id/layoutChatInput">
+
+                <TextView
+                    android:id="@+id/tvAttachmentSummary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="📷 Multimodal Sensory Attached"
+                    android:textColor="@color/royal_gold"
+                    android:textSize="11sp" />
+
+                <ImageView
+                    android:id="@+id/btnRemoveAttachment"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Remove Attachment"
+                    android:padding="4dp"
+                    android:src="@drawable/ic_close" />
+            </LinearLayout>
 
             <!-- Input Bar -->
             <LinearLayout
@@ -444,60 +363,473 @@
                 android:background="@color/royal_surface"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="8dp"
+                android:padding="6dp"
                 app:layout_constraintBottom_toBottomOf="parent">
 
                 <ImageView
-                    android:id="@+id/btnClearChatHistory"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:contentDescription="Clear Chat"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_delete" />
+                    android:id="@+id/btnChatCamera"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Attach Camera Snapshot"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_camera"
+                    app:tint="@color/royal_gold" />
+
+                <ImageView
+                    android:id="@+id/btnChatMic"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Voice Input"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_mic"
+                    app:tint="@color/royal_blue_light" />
+
+                <ImageView
+                    android:id="@+id/btnChatScreen"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Screen Capture"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_screen"
+                    app:tint="@color/status_ready" />
 
                 <EditText
                     android:id="@+id/etBuddyInput"
                     android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_marginEnd="6dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_input_boxy"
-                    android:hint="Ask your Physics Buddy..."
+                    android:hint="Ask Mobile AI assistant..."
                     android:imeOptions="actionSend"
                     android:inputType="textCapSentences|textMultiLine"
                     android:maxLines="3"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_muted"
                     android:textSize="13sp" />
 
                 <ImageView
+                    android:id="@+id/btnClearChatHistory"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Clear Chat"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_delete" />
+
+                <ImageView
                     android:id="@+id/fabSendBuddy"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
                     android:background="@drawable/bg_button_royal"
                     android:clickable="true"
                     android:contentDescription="Send"
                     android:focusable="true"
-                    android:padding="10dp"
+                    android:padding="9dp"
                     android:src="@drawable/ic_send" />
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- 3. WIKI VIEW (Physics Knowledge & Formulae) -->
+        <!-- 2. SENSORY VIEW (Live Camera, Mic Audio VU, Screen Recording Mirror) -->
+        <ScrollView
+            android:id="@+id/viewSensory"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/royal_bg"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Real-time Sensory Feeds"
+                    android:textColor="@color/royal_gold"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Live camera perception, audio waveform recording, and live screen capture."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+
+                <!-- Camera Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="📷 Live Camera Viewfinder"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvSensoryVisionStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_tag_boxy"
+                            android:paddingStart="6dp"
+                            android:paddingTop="2dp"
+                            android:paddingEnd="6dp"
+                            android:paddingBottom="2dp"
+                            android:text="Idle"
+                            android:textColor="@color/text_muted"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <TextureView
+                        android:id="@+id/cameraTextureView"
+                        android:layout_width="match_parent"
+                        android:layout_height="180dp"
+                        android:layout_marginTop="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnToggleCameraFeed"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_button_royal"
+                            android:text="Start Camera"
+                            android:textColor="@color/text_primary"
+                            android:textSize="11sp" />
+
+                        <Button
+                            android:id="@+id/btnFlipCameraFacing"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_card_boxy"
+                            android:text="Flip Lens"
+                            android:textColor="@color/royal_gold"
+                            android:textSize="11sp" />
+
+                        <Button
+                            android:id="@+id/btnSnapCameraToChat"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_button_gold"
+                            android:text="Capture"
+                            android:textColor="@color/royal_bg"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Audio Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🎙️ Live Audio Feed &amp; VU Waveform"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <ProgressBar
+                        android:id="@+id/pbAudioWaveform"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="10dp"
+                        android:layout_marginTop="8dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressTint="@color/royal_blue_light" />
+
+                    <TextView
+                        android:id="@+id/tvSensoryAudioTranscript"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_boxy"
+                        android:minHeight="38dp"
+                        android:padding="8dp"
+                        android:text="Live speech transcription appears here..."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnSensoryRecordMic"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_button_royal"
+                            android:text="Record Audio"
+                            android:textColor="@color/text_primary"
+                            android:textSize="11sp" />
+
+                        <Button
+                            android:id="@+id/btnSensorySpeechToText"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_card_boxy"
+                            android:text="Speech-To-Text"
+                            android:textColor="@color/royal_gold"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Screen Recording / Stream Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📱 Live Screen Recording &amp; Updates"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/ivScreenFeedPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/royal_surface"
+                        android:contentDescription="Screen Frame Preview"
+                        android:scaleType="fitCenter" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnSensoryScreenStream"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_button_royal"
+                            android:text="Start Screen Stream"
+                            android:textColor="@color/text_primary"
+                            android:textSize="11sp" />
+
+                        <Button
+                            android:id="@+id/btnSensorySendScreenToBuddy"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_button_gold"
+                            android:text="Send to Assistant"
+                            android:textColor="@color/royal_bg"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- 3. AGENT VIEW (Autonomous Phone Controller & UI Automation) -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/viewWiki"
+            android:id="@+id/viewAgent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/royal_bg"
+            android:visibility="gone">
+
+            <!-- Accessibility Status Header -->
+            <LinearLayout
+                android:id="@+id/layoutAgentHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/royal_surface"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Autonomous Phone Controller"
+                        android:textColor="@color/royal_gold"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvAccessibilityStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Accessibility Service: CHECKING..."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnEnableAccessibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_button_royal"
+                    android:text="Enable"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Goal Input Card -->
+            <LinearLayout
+                android:id="@+id/layoutAgentGoalCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:background="@drawable/bg_card_boxy"
+                android:orientation="vertical"
+                android:padding="10dp"
+                app:layout_constraintTop_toBottomOf="@id/layoutAgentHeader">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Task / Goal for Phone Agent"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etAgentGoal"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input_boxy"
+                    android:hint="e.g. Open Settings, toggle Airplane mode"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnRunAgentGoal"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_button_gold"
+                        android:text="Execute Goal"
+                        android:textColor="@color/royal_bg"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/btnStopAgentGoal"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_button_royal"
+                        android:text="Stop Agent"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Live Action Log RecyclerView -->
+            <TextView
+                android:id="@+id/tvAgentLogTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginTop="4dp"
+                android:text="AGENT EXECUTION STREAM"
+                android:textColor="@color/royal_gold"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvAgentSteps"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="6dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvAgentLogTitle" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- 4. ON-DEVICE VECTOR KNOWLEDGE BASE VIEW -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/viewKnowledge"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone">
 
-            <!-- Search + ZIM indicator -->
+            <!-- Search Bar & Re-index Header -->
             <LinearLayout
-                android:id="@+id/layoutWikiHeader"
+                android:id="@+id/layoutKnowledgeHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/royal_surface"
@@ -521,17 +853,130 @@
                         android:src="@drawable/ic_search" />
 
                     <EditText
-                        android:id="@+id/etWikiSearch"
+                        android:id="@+id/etKnowledgeSearch"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="@null"
-                        android:hint="Search physics laws, equations, theories..."
+                        android:hint="Search vector database &amp; documentation..."
                         android:textColor="@color/text_primary"
                         android:textColorHint="@color/text_muted"
                         android:textSize="13sp" />
                 </LinearLayout>
 
-                <!-- ZIM File Status Badge -->
+                <!-- Category Tags Filter -->
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/layoutKnowledgeTags"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/filterCatAll"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_card_boxy_gold"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="3dp"
+                            android:text="All"
+                            android:textColor="@color/royal_gold"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/filterCatHardware"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_tag_boxy"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="3dp"
+                            android:text="Hardware"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/filterCatInference"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_tag_boxy"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="3dp"
+                            android:text="Inference"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/filterCatNpu"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_tag_boxy"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="3dp"
+                            android:text="NPU"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/filterCatAgents"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_tag_boxy"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="3dp"
+                            android:text="Agents"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/filterCatRAG"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_tag_boxy"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="3dp"
+                            android:text="RAG"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/filterCatCloud"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_tag_boxy"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="3dp"
+                            android:text="Cloud"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <!-- Vector DB Status Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -540,91 +985,307 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/tvZimStatusBadge"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/tvKnowledgeCountBadge"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="8dp"
-                        android:paddingTop="2dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="2dp"
-                        android:text="Offline Wikipedia Physics Archive"
+                        android:layout_weight="1"
+                        android:text="Embedded Vectors Active (SQLite + Cosine)"
                         android:textColor="@color/royal_gold"
                         android:textSize="10sp"
                         android:textStyle="bold" />
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-
                     <TextView
-                        android:id="@+id/tvWikiCountBadge"
+                        android:id="@+id/btnReindexVectors"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Core Physics Theories"
-                        android:textColor="@color/text_muted"
-                        android:textSize="11sp" />
+                        android:background="@drawable/bg_tag_boxy"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingStart="8dp"
+                        android:paddingTop="2dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="2dp"
+                        android:text="Re-index DB"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
                 </LinearLayout>
 
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvWikiTopics"
+                android:id="@+id/rvKnowledgeEntries"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:clipToPadding="false"
                 android:paddingTop="6dp"
-                android:paddingBottom="12dp"
+                android:paddingBottom="80dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/layoutWikiHeader" />
+                app:layout_constraintTop_toBottomOf="@id/layoutKnowledgeHeader" />
+
+            <!-- Floating Action Button for New Knowledge Entry -->
+            <LinearLayout
+                android:id="@+id/fabNewKnowledge"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_button_gold"
+                android:clickable="true"
+                android:elevation="6dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginEnd="6dp"
+                    android:src="@drawable/ic_add"
+                    app:tint="@color/black" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add Vector Doc"
+                    android:textColor="@color/black"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- 4. SAVED VIEW (Bookmarked Posts) -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/viewSaved"
+        <!-- 5. HARDWARE & NPU DIAGNOSTICS VIEW -->
+        <ScrollView
+            android:id="@+id/viewHardware"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@color/royal_bg"
             android:visibility="gone">
 
-            <TextView
-                android:id="@+id/tvSavedHeader"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/royal_surface"
-                android:padding="12dp"
-                android:text="Bookmarked Discussions &amp; Insights"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:orientation="vertical"
+                android:padding="14dp">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvSavedPosts"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:clipToPadding="false"
-                android:paddingTop="6dp"
-                android:paddingBottom="12dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvSavedHeader" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hardware &amp; NPU Diagnostics"
+                    android:textColor="@color/royal_gold"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvEmptySaved"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="No bookmarked discussions yet.\nTap the bookmark icon on any post to save it."
-                android:textAlignment="center"
-                android:textColor="@color/text_muted"
-                android:textSize="13sp"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvSavedHeader" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Deep SoC inspection, CPU big-core affinity, RAM headroom, and NPU acceleration."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <!-- SoC & CPU Topology Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚙️ SoC Architecture &amp; CPU Clusters"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvSocModelInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="SoC: MediaTek / Qualcomm / Tensor (ARMv8/v9)"
+                        android:textColor="@color/royal_gold"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvCpuClusterInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Clusters: 4 Little Cores (Efficiency) + 4 Big Cores (Performance)"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvCpuPinningStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Big-Core Thread Affinity: ACTIVE (Prevents straggler stalls)"
+                        android:textColor="@color/status_ready"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- RAM & KV-Cache Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💾 Memory Budget &amp; KV-Cache Guard"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvRamBudgetInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Total RAM: -- MB | Available: -- MB"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvKvCacheRecommended"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Recommended Context Size: 2048 tokens (400MB Headroom)"
+                        android:textColor="@color/royal_gold"
+                        android:textSize="12sp" />
+
+                    <ProgressBar
+                        android:id="@+id/pbRamUsage"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        android:layout_marginTop="8dp"
+                        android:max="100"
+                        android:progress="45"
+                        android:progressTint="@color/royal_blue_light" />
+                </LinearLayout>
+
+                <!-- NPU Acceleration Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🚀 Heterogeneous NPU &amp; NNAPI"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvNpuProbeReport"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="NPU: Probing hardware neural accelerators..."
+                        android:textColor="@color/royal_gold"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvNpuSupportedOps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="INT8 GEMM • FP16 Matrix Multiplication • NNAPI 1.3"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <!-- Thermal Governor Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌡️ Dynamic Thermal Governor"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvThermalStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Thermal State: NORMAL (Clock throttling disabled)"
+                        android:textColor="@color/status_ready"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvGovernorAction"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Optimal Threads: 4 Big Cores • Micro-duty duty: 100%"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <!-- Hardware Action Buttons -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnRefreshDiagnostics"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_button_royal"
+                        android:text="Refresh Stats"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btnRunHardwareBenchmark"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_button_gold"
+                        android:text="Run NPU Probe"
+                        android:textColor="@color/royal_bg"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
 
     </FrameLayout>
 
@@ -635,7 +1296,7 @@
         android:background="@color/royal_card_border"
         app:layout_constraintBottom_toTopOf="@id/bottomNav" />
 
-    <!-- Royal Boxy Bottom Navigation Bar -->
+    <!-- Royal Boxy Bottom Navigation Bar (5 Primary Modes) -->
     <LinearLayout
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
@@ -645,43 +1306,13 @@
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- Tab 1: Feed -->
-        <LinearLayout
-            android:id="@+id/tabFeed"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="?selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageView
-                android:id="@+id/ivTabFeed"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_feed"
-                app:tint="@color/royal_gold" />
-
-            <TextView
-                android:id="@+id/tvTabFeed"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Feed"
-                android:textColor="@color/royal_gold"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Tab 2: Buddy -->
+        <!-- Tab 1: Chat -->
         <LinearLayout
             android:id="@+id/tabBuddy"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="?selectableItemBackground"
+            android:background="?attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
@@ -692,72 +1323,131 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/ic_buddy"
-                app:tint="@color/text_muted" />
+                app:tint="@color/royal_gold" />
 
             <TextView
                 android:id="@+id/tvTabBuddy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Buddy"
-                android:textColor="@color/text_muted"
-                android:textSize="11sp" />
+                android:text="Chat"
+                android:textColor="@color/royal_gold"
+                android:textSize="11sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Tab 3: Wiki -->
+        <!-- Tab 2: Sensory Feeds -->
         <LinearLayout
-            android:id="@+id/tabWiki"
+            android:id="@+id/tabSensory"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="?selectableItemBackground"
+            android:background="?attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageView
-                android:id="@+id/ivTabWiki"
+                android:id="@+id/ivTabSensory"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_wiki"
+                android:src="@drawable/ic_camera"
                 app:tint="@color/text_muted" />
 
             <TextView
-                android:id="@+id/tvTabWiki"
+                android:id="@+id/tvTabSensory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Wiki"
+                android:text="Sensory"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Tab 4: Saved -->
+        <!-- Tab 3: Phone Agent -->
         <LinearLayout
-            android:id="@+id/tabSaved"
+            android:id="@+id/tabAgent"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="?selectableItemBackground"
+            android:background="?attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageView
-                android:id="@+id/ivTabSaved"
+                android:id="@+id/ivTabAgent"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_bookmark"
+                android:src="@drawable/ic_agent"
                 app:tint="@color/text_muted" />
 
             <TextView
-                android:id="@+id/tvTabSaved"
+                android:id="@+id/tvTabAgent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Saved"
+                android:text="Agent"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Tab 4: Vector Knowledge Base -->
+        <LinearLayout
+            android:id="@+id/tabKnowledge"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/ivTabKnowledge"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_search"
+                app:tint="@color/text_muted" />
+
+            <TextView
+                android:id="@+id/tvTabKnowledge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Vector DB"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Tab 5: Hardware & NPU Diagnostics -->
+        <LinearLayout
+            android:id="@+id/tabHardware"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/ivTabHardware"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_model"
+                app:tint="@color/text_muted" />
+
+            <TextView
+                android:id="@+id/tvTabHardware"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Hardware"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
         </LinearLayout>

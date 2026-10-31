@@ -1,0 +1,32 @@
+name: 🚀 Feature Request
+description: Propose a new feature, model architecture, or hardware optimization
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make MobileAI faster, more versatile, or support new hardware? Tell us about it!
+
+  - type: textarea
+    id: feature_summary
+    attributes:
+      label: Feature Summary
+      description: What capability would you like to see added?
+      placeholder: e.g. Support for Qualcomm QNN Hexagon NPU delegates or On-Device Whisper STT
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem_solved
+    attributes:
+      label: Problem & Motivation
+      description: What problem or bottleneck does this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_implementation
+    attributes:
+      label: Proposed Implementation / Architecture
+      description: How could this be built? Any references, papers, or libraries?

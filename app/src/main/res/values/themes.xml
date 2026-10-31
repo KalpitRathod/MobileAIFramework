@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Royal Boxy Theme for PhoneAI Physics Community -->
+    <!-- Royal Boxy Theme for Mobile AI Studio -->
     <style name="Theme.PhoneAI" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/royal_blue</item>
         <item name="colorPrimaryInverse">@color/royal_blue_light</item>

@@ -17,7 +17,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Create Physics Discussion"
+            android:text="Add Knowledge / Vector Doc"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -26,7 +26,8 @@
             android:id="@+id/btnDialogClose"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:background="?selectableItemBackgroundBorderless"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Close"
             android:padding="6dp"
             android:src="@drawable/ic_close" />
     </LinearLayout>
@@ -40,23 +41,23 @@
 
     <!-- Title input -->
     <EditText
-        android:id="@+id/etNewPostTitle"
+        android:id="@+id/etNewKnowledgeTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_input_boxy"
-        android:hint="Discussion title (e.g. Entropy in Black Holes)"
+        android:hint="Doc Title (e.g. Vulkan GEMM Compute Shader)"
         android:padding="12dp"
         android:textColor="@color/text_primary"
         android:textColorHint="@color/text_muted"
         android:textSize="14sp" />
 
-    <!-- Tag selector row -->
+    <!-- Category selector -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="6dp"
-        android:text="Category Tag:"
+        android:text="Category:"
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
 
@@ -66,13 +67,13 @@
         android:scrollbars="none">
 
         <LinearLayout
-            android:id="@+id/layoutTagChooser"
+            android:id="@+id/layoutCategoryChooser"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tagOptQuantum"
+                android:id="@+id/catOptHardware"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="6dp"
@@ -81,13 +82,13 @@
                 android:paddingTop="5dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="5dp"
-                android:text="Quantum"
+                android:text="Hardware"
                 android:textColor="@color/royal_gold"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tagOptRelativity"
+                android:id="@+id/catOptInference"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="6dp"
@@ -96,12 +97,12 @@
                 android:paddingTop="5dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="5dp"
-                android:text="Relativity"
+                android:text="Inference"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 
             <TextView
-                android:id="@+id/tagOptThermodynamics"
+                android:id="@+id/catOptNpu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="6dp"
@@ -110,12 +111,12 @@
                 android:paddingTop="5dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="5dp"
-                android:text="Thermodynamics"
+                android:text="NPU"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 
             <TextView
-                android:id="@+id/tagOptAstrophysics"
+                android:id="@+id/catOptAgents"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="6dp"
@@ -124,12 +125,12 @@
                 android:paddingTop="5dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="5dp"
-                android:text="Astrophysics"
+                android:text="Agents"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 
             <TextView
-                android:id="@+id/tagOptSolidState"
+                android:id="@+id/catOptRAG"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="6dp"
@@ -138,38 +139,82 @@
                 android:paddingTop="5dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="5dp"
-                android:text="SolidState"
+                android:text="RAG"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/catOptCloud"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_tag_boxy"
+                android:paddingStart="10dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="5dp"
+                android:text="Cloud"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
         </LinearLayout>
     </HorizontalScrollView>
 
+    <!-- Summary input -->
+    <EditText
+        android:id="@+id/etNewKnowledgeSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_input_boxy"
+        android:hint="One-line summary for semantic matching"
+        android:padding="12dp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:textSize="14sp" />
+
     <!-- Content input -->
     <EditText
-        android:id="@+id/etNewPostContent"
+        android:id="@+id/etNewKnowledgeContent"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="100dp"
         android:layout_marginTop="12dp"
         android:background="@drawable/bg_input_boxy"
         android:gravity="top|start"
-        android:hint="Elaborate on your physics hypothesis, question, or derivation..."
+        android:hint="Full technical documentation, architectural notes, or code..."
         android:padding="12dp"
         android:textColor="@color/text_primary"
         android:textColorHint="@color/text_muted"
         android:textSize="13sp" />
 
-    <!-- Publish button -->
-    <Button
-        android:id="@+id/btnSubmitPost"
+    <!-- Submit buttons -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:background="@drawable/bg_button_royal"
-        android:text="Publish to Local Network"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnCancelKnowledge"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="Cancel"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnSaveKnowledge"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_button_gold"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:text="Index &amp; Save"
+            android:textColor="@color/royal_bg"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 </LinearLayout>
 

@@ -76,4 +76,15 @@ dependencies {
 
     // Google MediaPipe Tasks GenAI for On-Device LLM Inference
     implementation 'com.google.mediapipe:tasks-genai:0.10.14'
+
+    // On-Device ML Kit Text Recognition (OCR) for converting photos & screenshots to text completely offline
+    implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.0'
+
+    // High performance networking for external cloud AI APIs (Gemini, Claude, OpenAI, Mistral, etc.)
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    // Unit Testing
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20231013'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
 }

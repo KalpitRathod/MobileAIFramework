@@ -1,18 +1,19 @@
 <resources>
-    <string name="app_name">AETHER • Physics</string>
-    <string name="model_title">AETHER Physics Buddy</string>
+    <string name="app_name">Mobile AI Studio</string>
+    <string name="model_title">Mobile AI Assistant</string>
     <string name="status_not_found">No Model Loaded</string>
     <string name="status_initializing">Initializing Engine…</string>
     <string name="status_ready">Engine Ready</string>
     <string name="status_generating">Thinking…</string>
-    <string name="input_hint">Ask your Physics Buddy…</string>
+    <string name="input_hint">Ask Mobile AI assistant…</string>
     <string name="btn_send">Send</string>
     <string name="btn_stop">Stop</string>
     <string name="btn_import_model">Select Model File</string>
     <string name="btn_scan_tmp">Scan /data/local/tmp</string>
-    <string name="no_messages_yet">Start a conversation with your on-device Physics Buddy.</string>
-    <string name="prompt_1">Explain Bell\'s Theorem</string>
-    <string name="prompt_2">Derive E=mc² simply</string>
-    <string name="prompt_3">Entropy &amp; Arrow of Time</string>
-    <string name="prompt_4">Hawking Radiation mechanism</string>
+    <string name="no_messages_yet">Start a conversation with on-device or cloud AI.</string>
+    <string name="prompt_1">Benchmark on-device tok/s</string>
+    <string name="prompt_2">Explain CPU Big-Core pinning</string>
+    <string name="prompt_3">Analyze RAM budget &amp; KV-Cache</string>
+    <string name="prompt_4">Autonomous Phone Agent guide</string>
+    <string name="accessibility_service_description">Autonomous Phone Controller Agent for MobileAI Framework. Enables AI-driven screen perception, navigation gestures, and app automation.</string>
 </resources>

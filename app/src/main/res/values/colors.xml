@@ -51,4 +51,12 @@
     <color name="divider">#1B2742</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
+
+    <!-- Sensory & Cyber Accents -->
+    <color name="cyber_cyan">#00D2FF</color>
+    <color name="cyber_green">#00FF9D</color>
+    <color name="cyber_magenta">#FF007F</color>
+    <color name="recording_red">#EF4444</color>
+    <color name="agent_purple">#8B5CF6</color>
+    <color name="european_blue">#003399</color>
 </resources>

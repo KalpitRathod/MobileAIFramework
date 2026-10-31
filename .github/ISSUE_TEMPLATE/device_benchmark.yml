@@ -1,0 +1,57 @@
+name: 🏎️ Community Device Benchmark
+description: Submit benchmark numbers from your smartphone to help expand the community database
+title: "[BENCHMARK]: "
+labels: ["benchmark"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help the community map out on-device AI performance across different Android SoCs!
+
+  - type: input
+    id: phone_model
+    attributes:
+      label: Smartphone Brand & Model
+      placeholder: e.g. OnePlus 12 / Xiaomi Redmi Note 13 / Google Pixel 8
+    validations:
+      required: true
+
+  - type: input
+    id: soc_chipset
+    attributes:
+      label: SoC Chipset & CPU Core Setup
+      placeholder: e.g. MediaTek Dimensity 7050 / Snapdragon 8 Gen 3
+    validations:
+      required: true
+
+  - type: input
+    id: model_tested
+    attributes:
+      label: Model Name & Quantization
+      placeholder: e.g. SmolLM2-360M Q4_K_M (258MB)
+    validations:
+      required: true
+
+  - type: input
+    id: tok_per_sec
+    attributes:
+      label: Inference Speed (Tokens/Second)
+      placeholder: e.g. 38.5 tok/s
+    validations:
+      required: true
+
+  - type: input
+    id: time_to_first_token
+    attributes:
+      label: Time to First Token (TTFT) & Total Generation Latency
+      placeholder: e.g. 210ms TTFT, 1024 tokens in 26.5s
+    validations:
+      required: false
+
+  - type: input
+    id: thermal_behavior
+    attributes:
+      label: Thermal & Battery Impact
+      placeholder: e.g. Nominal thermal status, temperature rose ~2.1°C after 5 minutes
+    validations:
+      required: false

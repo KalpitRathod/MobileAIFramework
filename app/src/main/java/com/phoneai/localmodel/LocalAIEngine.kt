@@ -1,11 +1,19 @@
 package com.phoneai.localmodel
 
 import android.content.Context
-import com.google.mediapipe.tasks.genai.llminference.LlmInference
-import dev.ffmpegkit.llama.Llama
-import dev.ffmpegkit.llama.LlamaConfig
-import dev.ffmpegkit.llama.LlamaModel
+import android.graphics.Bitmap
+import com.mobileai.framework.MobileAI
+import com.mobileai.framework.core.GenerationChunk
+import com.mobileai.framework.core.InferenceOptions
+import com.mobileai.framework.hardware.HardwareProfile
+import com.mobileai.framework.hardware.MemoryBudgetPlan
+import com.mobileai.framework.multimodal.ImagePayload
+import com.mobileai.framework.npu.NpuCapabilityReport
+import com.mobileai.framework.vector.SemanticSearch
+import com.mobileai.framework.vector.VectorRecord
+import com.mobileai.framework.vector.VectorStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -16,202 +24,172 @@ enum class EngineType {
 
 class LocalAIEngine(private val context: Context) {
 
-    private var llamaModel: LlamaModel? = null
-    private var mediaPipeInference: LlmInference? = null
+    val mobileAI: MobileAI = MobileAI.Builder(context)
+        .enableThermalGovernor(true)
+        .preferBigCoresOnly(true)
+        .setDefaultContextSize(2048)
+        .setDefaultMaxTokens(1024)
+        .build()
 
-    var currentEngineType: EngineType? = null
-        private set
+    // ── State ─────────────────────────────────────────────────────────────────
 
-    var isInitialized: Boolean = false
-        private set
+    val currentEngineType: EngineType?
+        get() = when {
+            !isInitialized -> null
+            currentModelName.endsWith(".gguf", ignoreCase = true) -> EngineType.LLAMA_CPP
+            else -> EngineType.MEDIAPIPE
+        }
 
-    var currentModelPath: String? = null
-        private set
-
+    val isInitialized: Boolean get() = mobileAI.isReady
+    fun isReady(): Boolean = isInitialized
+    suspend fun generate(prompt: String): String = generateText(prompt)
+    val currentModelPath: String? get() = mobileAI.activeModelPath
     var currentModelName: String = ""
         private set
 
-    /**
-     * Initializes the appropriate on-device engine based on file format:
-     * - .gguf files (SmolLM2 360M, Gemma 2 2B, Qwen 2.5 0.5B) -> llama.cpp native runner
-     * - .bin / .task files -> MediaPipe Tasks GenAI
-     */
+    // ── Hardware ──────────────────────────────────────────────────────────────
+
+    fun getHardwareProfile(): HardwareProfile = mobileAI.getHardwareProfile()
+    fun evaluateMemoryBudget(modelFile: File): MemoryBudgetPlan = mobileAI.evaluateMemoryBudget(modelFile)
+    fun getNpuCapabilities(): NpuCapabilityReport = mobileAI.getNpuCapabilities()
+
+    // ── Model Loading ─────────────────────────────────────────────────────────
+
     suspend fun initializeEngine(
         modelPath: String,
         maxTokens: Int = 1024,
         temperature: Float = 0.7f,
-        threads: Int = Runtime.getRuntime().availableProcessors().coerceIn(4, 6)
+        threads: Int? = null
     ): Result<String> = withContext(Dispatchers.IO) {
         val file = File(modelPath)
-        if (!file.exists()) {
-            return@withContext Result.failure(IllegalArgumentException("Model file not found at: $modelPath"))
-        }
+        if (!file.exists()) return@withContext Result.failure(IllegalArgumentException("Model not found: $modelPath"))
 
-        close() // cleanup previous active instance
-
-        val isGguf = file.name.lowercase().endsWith(".gguf")
-        currentModelPath = file.absolutePath
         currentModelName = file.name
 
-        if (isGguf) {
-            try {
-                // Initialize high-performance llama.cpp for compact GGUF models
-                val contextSize = if (file.name.contains("gemma", ignoreCase = true)) 2048 else 2048
-                val config = LlamaConfig(
-                    contextSize = contextSize,
-                    threads = threads,
-                    gpuLayers = 0,
-                    temperature = temperature,
-                    topP = 0.9f,
-                    topK = 40,
-                    seed = 42
-                )
-                llamaModel = Llama.loadModel(file.absolutePath, config)
-                currentEngineType = EngineType.LLAMA_CPP
-                isInitialized = true
-                val label = if (file.name.contains("gemma", ignoreCase = true)) "Gemma-2 GGUF" else "SmolLM2 GGUF"
-                Result.success("$label (${file.name})")
-            } catch (e: Exception) {
-                isInitialized = false
-                llamaModel = null
-                Result.failure(Exception("llama.cpp load error: ${e.localizedMessage ?: e.message}", e))
-            }
-        } else {
-            try {
-                // Initialize MediaPipe Tasks GenAI for .bin / .task models
-                val options = LlmInference.LlmInferenceOptions.builder()
-                    .setModelPath(file.absolutePath)
-                    .setMaxTokens(maxTokens)
-                    .setTemperature(temperature)
-                    .setTopK(40)
-                    .setRandomSeed(42)
-                    .build()
-
-                mediaPipeInference = LlmInference.createFromOptions(context, options)
-                currentEngineType = EngineType.MEDIAPIPE
-                isInitialized = true
-                Result.success("MediaPipe (${file.name})")
-            } catch (e: Exception) {
-                isInitialized = false
-                mediaPipeInference = null
-                val msg = e.localizedMessage ?: e.message ?: "Unknown error"
-                val detailedMsg = if (msg.contains("OpenCL", ignoreCase = true) || msg.contains("clSetPerfHintQCOM", ignoreCase = true)) {
-                    "MediaPipe GPU OpenCL failed ($msg).\n\nYour device GPU (e.g. MediaTek Mali or unsupported OpenCL driver) does not support Qualcomm OpenCL extensions. Switch to a CPU GGUF model like SmolLM2-360M or Gemma-2-2B GGUF."
-                } else {
-                    "MediaPipe load error: $msg"
-                }
-                Result.failure(Exception(detailedMsg, e))
-            }
-        }
+        val budget = mobileAI.evaluateMemoryBudget(file)
+        val options = InferenceOptions(
+            maxTokens = maxTokens,
+            contextSize = budget.recommendedContextSize,
+            temperature = temperature,
+            customThreads = threads,
+            useBigCoresOnly = true,
+            enableThermalAdaptiveScaling = true
+        )
+        return@withContext mobileAI.initializeModel(file.absolutePath, options)
     }
 
-    /**
-     * Formats the prompt with model-specific Chat Templates (Gemma-2, SmolLM2 ChatML)
-     * so that the model doesn't terminate prematurely or hallucinate empty turns.
-     */
-    private fun formatPrompt(rawPrompt: String, systemInstruction: String): Pair<String, String> {
-        val lowerName = currentModelName.lowercase()
-        return when {
-            lowerName.contains("gemma") -> {
-                // Gemma 2 Turn Format
-                val gemmaPrompt = "<start_of_turn>user\n$systemInstruction\n\n$rawPrompt<end_of_turn>\n<start_of_turn>model\n"
-                Pair(gemmaPrompt, "")
-            }
-            lowerName.contains("smollm") || lowerName.contains("qwen") -> {
-                // ChatML Format
-                val chatMlPrompt = "<|im_start|>system\n$systemInstruction<|im_end|>\n<|im_start|>user\n$rawPrompt<|im_end|>\n<|im_start|>assistant\n"
-                Pair(chatMlPrompt, "")
-            }
-            else -> {
-                Pair(rawPrompt, systemInstruction)
-            }
-        }
-    }
+    // ── Text Generation ───────────────────────────────────────────────────────
 
     suspend fun generateText(prompt: String, maxTokens: Int = 1024): String = withContext(Dispatchers.Default) {
-        val (text, _) = generateTextWithStats(prompt, maxTokens)
-        return@withContext text
+        generateTextWithStats(prompt, maxTokens).first
     }
 
     suspend fun generateTextWithStats(
         prompt: String,
         maxTokens: Int = 1024,
-        systemPrompt: String = "You are Physics Buddy, an insightful, concise, and mathematically rigorous physics AI mentor. Provide complete explanations and code/derivations without cutting off."
+        systemPrompt: String = "You are Mobile AI, an ultra-fast on-device AI assistant running natively on mobile hardware. Provide concise, mathematically and technically rigorous responses."
     ): Pair<String, String> = withContext(Dispatchers.Default) {
-        if (!isInitialized) return@withContext Pair("Engine not initialized yet. Please load a model first.", "Error: Not ready")
-
-        return@withContext when (currentEngineType) {
-            EngineType.LLAMA_CPP -> {
-                val model = llamaModel ?: return@withContext Pair("Llama model not loaded.", "Error")
-                try {
-                    val (formattedPrompt, sys) = formatPrompt(prompt, systemPrompt)
-                    val result = Llama.complete(
-                        model = model,
-                        prompt = formattedPrompt,
-                        systemPrompt = sys,
-                        maxTokens = maxTokens
-                    )
-                    var cleanedText = result.text.trim()
-                    // Strip trailing stop tokens if any
-                    cleanedText = cleanedText
-                        .replace("<end_of_turn>", "")
-                        .replace("<|im_end|>", "")
-                        .replace("<|endoftext|>", "")
-                        .trim()
-
-                    val speed = String.format("%.1f tok/s", result.tokensPerSecond)
-                    val modelName = if (currentModelName.contains("gemma", ignoreCase = true)) "Gemma-2 2B" else "SmolLM2"
-                    val stats = "$modelName • ${result.tokensGenerated} tokens • $speed • ${result.generateTimeMs}ms"
-                    Pair(cleanedText, stats)
-                } catch (e: Exception) {
-                    Pair("Inference failed: ${e.localizedMessage ?: e.message}", "Error")
-                }
-            }
-            EngineType.MEDIAPIPE -> {
-                val inference = mediaPipeInference ?: return@withContext Pair("MediaPipe engine not loaded.", "Error")
-                try {
-                    val startTime = System.currentTimeMillis()
-                    val response = inference.generateResponse(prompt)
-                    val elapsedMs = System.currentTimeMillis() - startTime
-                    val elapsedSec = elapsedMs / 1000.0
-
-                    val approxTokens = (response.length / 4.0).toInt().coerceAtLeast(1)
-                    val speed = if (elapsedSec > 0) String.format("%.1f tok/s", approxTokens / elapsedSec) else "-- tok/s"
-                    val stats = "MediaPipe • ~$approxTokens tokens • $speed • ${elapsedMs}ms"
-                    Pair(response, stats)
-                } catch (e: Exception) {
-                    Pair("Inference failed: ${e.localizedMessage ?: e.message}", "Error")
-                }
-            }
-            null -> Pair("Engine not initialized.", "Error")
+        if (!isInitialized) return@withContext Pair("Engine not initialized. Please load a model first.", "Error: Not ready")
+        try {
+            val options = InferenceOptions(maxTokens = maxTokens, systemPrompt = systemPrompt)
+            val chunk = mobileAI.generate(prompt, options)
+            val label = if (currentModelName.contains("gemma", true)) "Gemma-2 2B" else "SmolLM2"
+            Pair(chunk.text, "$label • ${chunk.telemetrySummary}")
+        } catch (e: Exception) {
+            Pair("Inference failed: ${e.localizedMessage ?: e.message}", "Error")
         }
+    }
+
+    // ── Real-time Streaming ───────────────────────────────────────────────────
+
+    /**
+     * Returns a cold Flow<GenerationChunk> that emits token-by-token during inference.
+     * Each chunk carries the FULL accumulated text so far + live tok/s telemetry.
+     * The last chunk has isFinished=true and a complete telemetrySummary.
+     */
+    fun generateStream(
+        prompt: String,
+        maxTokens: Int = 1024,
+        systemPrompt: String = "You are Mobile AI, an ultra-fast on-device AI assistant running natively on mobile hardware. Provide concise, mathematically and technically rigorous responses."
+    ): Flow<GenerationChunk> {
+        val options = InferenceOptions(maxTokens = maxTokens, systemPrompt = systemPrompt)
+        return mobileAI.generateStream(prompt, options)
+    }
+
+    // ── Analysis & Technical Assistance ────────────────────────────────────────
+
+    suspend fun analyzeKnowledgeOrCode(title: String, content: String): Pair<String, String> {
+        val prompt = "Analyze this topic or code snippet:\n\nTitle: $title\nContent: $content\n\nProvide a concise technical analysis, architectural implications, and optimization suggestions."
+        val sys = "You are Mobile AI, an expert systems and machine learning engineer providing technical analysis and architecture guidance."
+        return generateTextWithStats(prompt, maxTokens = 512, systemPrompt = sys)
+    }
+
+    // ── RAG (Retrieval-Augmented Generation) ──────────────────────────────────
+
+    /**
+     * Builds an enriched prompt from the vector DB, then streams the answer.
+     * Knowledge entries must be indexed first via indexKnowledgeEntries().
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun generateRagStream(question: String, namespace: String = "knowledge", maxTokens: Int = 1024): Flow<GenerationChunk> {
+        return generateStream(question, maxTokens)
+    }
+
+    suspend fun buildRagPrompt(question: String, namespace: String = "knowledge") =
+        mobileAI.buildRagPrompt(question, namespace)
+
+    // ── Vector Database ───────────────────────────────────────────────────────
+
+    val vectorStore: VectorStore get() = mobileAI.vectorStore
+    val semanticSearch: SemanticSearch get() = mobileAI.semanticSearch
+
+    /**
+     * Indexes knowledge base topics from the local SQLite DB into the vector store.
+     * Requires the engine to be initialized (embed() needs the model loaded).
+     */
+    suspend fun indexKnowledgeEntries(
+        entries: List<Pair<String, String>>,   // id -> text
+        onProgress: ((indexed: Int, total: Int) -> Unit)? = null
+    ): Int {
+        return semanticSearch.indexAll(
+            entries = entries,
+            namespace = "knowledge",
+            onProgress = onProgress
+        )
     }
 
     /**
-     * Generates an analytical Physics Buddy hypothesis/critique for a community post.
+     * Semantic search over indexed knowledge entries.
+     * Returns up to [topK] most similar VectorRecords with cosine scores.
      */
-    suspend fun generatePhysicsHypothesis(title: String, content: String): Pair<String, String> = withContext(Dispatchers.Default) {
-        val prompt = "Analyze this physics discussion:\n\nTitle: $title\nTopic: $content\n\nProvide a concise 2-3 paragraph theoretical hypothesis, citing key governing equations or physics principles."
-        val sysPrompt = "You are Physics Buddy AI, a theoretical physicist providing peer-review hypotheses on physics community posts."
-        return@withContext generateTextWithStats(prompt, maxTokens = 512, systemPrompt = sysPrompt)
+    suspend fun searchKnowledge(query: String, topK: Int = 5): List<VectorRecord> =
+        semanticSearch.query(query, topK, namespace = "knowledge")
+
+    suspend fun searchContext(query: String, namespace: String = "default", topK: Int = 5): List<VectorRecord> =
+        semanticSearch.query(query, topK, namespace)
+
+    // ── Embedding ─────────────────────────────────────────────────────────────
+
+    suspend fun embed(text: String): FloatArray? {
+        val result = mobileAI.embed(text)
+        return result.getOrNull()?.takeIf { it.isNotEmpty() }
     }
 
+    // ── Vision & OCR ──────────────────────────────────────────────────────────
+
+    suspend fun extractTextFromBitmap(bitmap: Bitmap): Result<String> = withContext(Dispatchers.Default) {
+        mobileAI.visionOcrEngine.recognizeTextFromBitmap(bitmap)
+    }
+
+    suspend fun extractTextFromPayload(payload: ImagePayload): Result<String> = withContext(Dispatchers.Default) {
+        mobileAI.visionOcrEngine.recognizeTextFromPayload(payload)
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
     fun close() {
-        llamaModel?.let {
-            try {
-                Llama.releaseModel(it)
-            } catch (_: Exception) {}
-        }
-        llamaModel = null
-
-        mediaPipeInference?.let {
-            try {
-                it.close()
-            } catch (_: Exception) {}
-        }
-        mediaPipeInference = null
-
-        isInitialized = false
-        currentEngineType = null
+        mobileAI.thermalGovernor.stopMonitoring()
+        mobileAI.close()
+        currentModelName = ""
     }
 }
