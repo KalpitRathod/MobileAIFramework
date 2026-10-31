@@ -19,7 +19,7 @@ If you believe you have found a security vulnerability:
 
 1. **Do NOT report security vulnerabilities via public GitHub issues.**
 2. Send an email with details, reproduction steps, and impact assessment to:
-   **kalpitrathod10@gmail.com**
+   **kalpitrathod@outlook.com**
 3. Please include:
    - Type of issue (e.g., buffer overflow, memory leak, unauthorized accessibility execution, insecure key storage).
    - Component affected (e.g., `LlamaNativeEngine`, `CloudApiKeyStore`, `PhoneControllerAccessibilityService`).
