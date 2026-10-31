@@ -1,13 +1,14 @@
-# Mobile AI Studio - Model Deployment Helper (PowerShell)
+# Mobile AI Studio - Multi-Model Deployment Helper (PowerShell)
 param (
-    [string]$ModelFile = ""
+    [string]$ModelFile = "",
+    [switch]$All = $false
 )
 
 $AdbPath = "C:\Users\Kalpit\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 if (-not (Test-Path $AdbPath)) { $AdbPath = "adb" }
 
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "         Mobile AI Studio - Model Deployment            " -ForegroundColor Cyan
+Write-Host "         Mobile AI Studio — Model Deployment            " -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -16,70 +17,88 @@ function Is-VisionProjector([string]$name) {
     return ($lower.StartsWith("mmproj") -or $lower.Contains("mmproj") -or $lower.Contains("projector"))
 }
 
-# Auto-detect base model candidates
-$baseModelCandidate = $null
-if ($ModelFile -ne "") {
-    $baseModelCandidate = $ModelFile
-} else {
-    if (Test-Path "smollm2-360m-instruct-q4_k_m.gguf") {
-        $baseModelCandidate = "smollm2-360m-instruct-q4_k_m.gguf"
-    } elseif (Test-Path "qwen2.5-0.5b-instruct-q4_k_m.gguf") {
-        $baseModelCandidate = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
-    } elseif (Test-Path "gemma-2-2b-it-q4_k_m.gguf") {
-        $baseModelCandidate = "gemma-2-2b-it-q4_k_m.gguf"
+# Collect all available models in current folder
+$availableModels = Get-ChildItem -Include "*.gguf","*.bin" -File | Sort-Object Length -Descending
+
+if ($availableModels.Count -eq 0) {
+    Write-Host "[ERROR] No .gguf or .bin model files found in current directory!" -ForegroundColor Red
+    Write-Host "Directory: $PWD" -ForegroundColor Yellow
+    exit 1
+}
+
+$filesToPush = @()
+
+if ($All) {
+    $filesToPush = $availableModels | ForEach-Object { $_.Name }
+} elseif ($ModelFile -ne "") {
+    if (Test-Path $ModelFile) {
+        $filesToPush = @($ModelFile)
     } else {
-        $candidate = Get-ChildItem -Filter "*.gguf" | Where-Object { -not (Is-VisionProjector $_.Name) } | Select-Object -First 1
-        if ($null -ne $candidate) {
-            $baseModelCandidate = $candidate.Name
+        Write-Host "[ERROR] Specified model file not found: $ModelFile" -ForegroundColor Red
+        exit 1
+    }
+} else {
+    Write-Host "Available models in this folder:" -ForegroundColor Yellow
+    $index = 1
+    foreach ($m in $availableModels) {
+        $mb = [math]::Round($m.Length / 1MB, 1)
+        $tag = if (Is-VisionProjector $m.Name) { "[Vision Projector]" } `
+               elseif ($m.Name.EndsWith(".bin")) { "[MediaPipe GPU]   " } `
+               elseif ($m.Name.Contains("whisper")) { "[Audio STT]       " } `
+               elseif ($m.Name.Contains("bge") -or $m.Name.Contains("minilm")) { "[Vector Embedding]" } `
+               else { "[Language Model]  " }
+        Write-Host ("  [{0,2}] {1} {2,-38} ({3,7} MB)" -f $index, $tag, $m.Name, $mb) -ForegroundColor Gray
+        $index++
+    }
+    Write-Host "  [ A] Push ALL Models" -ForegroundColor Cyan
+    Write-Host ""
+    $choice = Read-Host "Select model number to push to device (or 'A' for all, default: 1)"
+    if ($choice -eq "" -or $choice -eq "1") {
+        $filesToPush = @($availableModels[0].Name)
+    } elseif ($choice.ToLower() -eq "a") {
+        $filesToPush = $availableModels | ForEach-Object { $_.Name }
+    } else {
+        $parsed = 0
+        if ([int]::TryParse($choice, [ref]$parsed) -and $parsed -ge 1 -and $parsed -le $availableModels.Count) {
+            $filesToPush = @($availableModels[$parsed - 1].Name)
+        } else {
+            Write-Host "Invalid selection. Exiting." -ForegroundColor Red
+            exit 1
         }
     }
 }
 
-# Auto-detect vision projector candidates (e.g. mmproj-GLM-OCR-Q8_0.gguf)
-$projectorCandidate = Get-ChildItem -Filter "*.gguf" | Where-Object { Is-VisionProjector $_.Name } | Select-Object -First 1
+Write-Host ""
+Write-Host "Checking connected Android devices via ADB..." -ForegroundColor Cyan
+$deviceOutput = & $AdbPath devices 2>&1
+$deviceLines = $deviceOutput | Where-Object { $_ -match "\bdevice\b" -and $_ -notmatch "List of devices" }
 
-$filesToPush = @()
-
-if ($null -ne $baseModelCandidate -and (Test-Path $baseModelCandidate)) {
-    $filesToPush += $baseModelCandidate
-}
-
-if ($null -ne $projectorCandidate) {
-    $filesToPush += $projectorCandidate.Name
-}
-
-if ($filesToPush.Count -eq 0) {
-    # If the user passed or only has an mmproj file
-    $anyGguf = Get-ChildItem -Filter "*.gguf" | Select-Object -First 1
-    if ($null -ne $anyGguf) {
-        $filesToPush += $anyGguf.Name
-    }
-}
-
-if ($filesToPush.Count -eq 0) {
-    Write-Host "[ERROR] No .gguf model files found in current directory!" -ForegroundColor Red
-    Write-Host "Place your .gguf file here: $PWD" -ForegroundColor Yellow
+if ($null -eq $deviceLines -or $deviceLines.Count -eq 0) {
+    Write-Host "⚠️ No Android device connected via ADB." -ForegroundColor Yellow
+    Write-Host "Please connect your phone via USB with 'USB Debugging' enabled," -ForegroundColor Yellow
+    Write-Host "or copy the files directly to your phone's 'Download' folder." -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Recommended compact base models for mobile:" -ForegroundColor Cyan
-    Write-Host "  1. SmolLM2-360M: https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF" -ForegroundColor Gray
-    Write-Host "  2. Qwen2.5-0.5B: https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF" -ForegroundColor Gray
-    exit 1
+    Write-Host "Selected models ready for deployment:" -ForegroundColor Green
+    foreach ($f in $filesToPush) {
+        $sz = [math]::Round((Get-Item $f).Length / 1MB, 1)
+        Write-Host "  • $f ($sz MB)" -ForegroundColor Gray
+    }
+    exit 0
 }
 
-Write-Host "Checking connected Android devices via ADB..." -ForegroundColor Gray
-& $AdbPath devices
+Write-Host "Connected Device Found:" -ForegroundColor Green
+$deviceLines | ForEach-Object { Write-Host "  $_" -ForegroundColor Green }
+Write-Host ""
 
 foreach ($f in $filesToPush) {
+    $fileItem = Get-Item $f
+    $fileSizeMb = [math]::Round($fileItem.Length / 1MB, 1)
     $isProj = Is-VisionProjector $f
-    $fileSizeMb = [math]::Round((Get-Item $f).Length / 1MB, 1)
 
     if ($isProj) {
-        Write-Host ""
         Write-Host "[VISION PROJECTOR] $f ($fileSizeMb MB)" -ForegroundColor Magenta
-        Write-Host "  Multimodal projection adapter detected." -ForegroundColor DarkGray
     } else {
-        Write-Host ""
-        Write-Host "[BASE LANGUAGE MODEL] $f ($fileSizeMb MB)" -ForegroundColor Green
+        Write-Host "[MODEL] $f ($fileSizeMb MB)" -ForegroundColor Green
     }
 
     Write-Host "  -> Pushing to /data/local/tmp/$f..." -ForegroundColor Yellow
@@ -88,15 +107,15 @@ foreach ($f in $filesToPush) {
     if ($LASTEXITCODE -ne 0) {
         Write-Host "  [Fallback] Pushing to /sdcard/Download/..." -ForegroundColor Yellow
         & $AdbPath push $f /sdcard/Download/
-        Write-Host "  Pushed to /sdcard/Download/. In app, tap 'Select Model File'." -ForegroundColor Green
+        Write-Host "  ✓ Pushed to /sdcard/Download/. Available in app file picker." -ForegroundColor Green
     } else {
         & $AdbPath shell chmod 644 "/data/local/tmp/$f"
         & $AdbPath shell "run-as com.phoneai.localmodel.debug cp /data/local/tmp/$f /data/data/com.phoneai.localmodel.debug/files/$f" 2>$null
-        Write-Host "  -> Successfully deployed to app storage!" -ForegroundColor Green
+        Write-Host "  ✓ Successfully deployed to app storage!" -ForegroundColor Green
     }
 }
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Green
-Write-Host "Deployment complete! Launch Mobile AI Studio on device." -ForegroundColor Green
+Write-Host "         Deployment Completed Successfully!             " -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
