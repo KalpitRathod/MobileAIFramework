@@ -68,17 +68,68 @@ Switch with a single toggle between local zero-cost edge inference and cloud rea
 
 ---
 
-## 📊 Benchmarks & Model Compatibility
+## 📊 Verified Model Compatibility & Benchmarks
 
-Tested on real hardware (**MediaTek Helio G85 / Dimensity 6100+**, **Qualcomm Snapdragon 778G / 8 Gen 2**):
+All models below have been verified against binary GGUF v3 specifications and tested on real mobile hardware (**MediaTek Helio G85 / Dimensity 6100+**, **Qualcomm Snapdragon 778G / 8 Gen 2**):
 
-| Model | Format / Quant | Size | Peak RAM | Generation Speed | Best For |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **SmolLM2-360M-Instruct** *(Default)* | `.gguf` (Q4_K_M) | **258 MB** | ~320 MB | **30 – 45 tok/s** | Ultra-responsive chat, edge agent, battery friendly |
-| **Qwen2.5-0.5B-Instruct** | `.gguf` (Q4_K_M) | **398 MB** | ~480 MB | **22 – 35 tok/s** | Code snippets, math logic, structured JSON |
-| **Gemma-2-2B-Instruct** | `.gguf` (Q4_K_M) | **1.71 GB** | ~1.65 GB | **4 – 8 tok/s** | Deep reasoning, long explanations |
-| **SmolLM2-135M-Instruct** | `.gguf` (Q4_K_M) | **90 MB** | ~170 MB | **50 – 70 tok/s** | Ultra-budget devices, background automation |
-| **Qwen2.5-1.5B-Instruct** | `.gguf` (Q4_K_M) | **986 MB** | ~1.2 GB | **8 – 14 tok/s** | Balanced multilingual chat |
+### 💬 1. Conversational & Agent Models
+| Model File | Size | Architecture | Vocab / Tensors | Context Window | Generation Speed | Primary Role |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **`smollm2-360m-instruct-q4_k_m.gguf`** *(Default)* | **258 MB** | `llama` | 49,152 / 290 | 8,192 | **35 – 45 tok/s** | Ultra-responsive chat, instant edge queries, battery friendly |
+| **`qwen2.5-0.5b-instruct-q4_k_m.gguf`** | **468 MB** | `qwen2` | 151,936 / 291 | 32,768 | **25 – 35 tok/s** | Autonomous Phone Agent, structured JSON, tool calling |
+| **`gemma-2-2b-it-q4_k_m.gguf`** | **1.71 GB** | `gemma2` | 256,000 / 288 | 8,192 | **5 – 8 tok/s** | Deep Socratic reasoning, theoretical analysis, long synthesis |
+| **`GLM-OCR-Q8_0.gguf`** | **906 MB** | `glm4` | 59,392 / 179 | 131,072 | **10 – 16 tok/s** | Long-context document OCR language backbone |
+| **`smolvlm-500m-instruct-q4_k_m.gguf`** | **289 MB** | `llama` | 49,280 / 291 | 8,192 | **30 – 40 tok/s** | Compact Vision-Language Model base |
+
+### 👁️ 2. Multimodal Vision Projectors (`mmproj`)
+| Projector File | Size | Architecture | Tensors | Companion Base Model | Capabilities |
+| :--- | :---: | :---: | :---: | :--- | :--- |
+| **`mmproj-SmolVLM-500M-Instruct-f16.gguf`** | **190 MB** | `clip` | 198 | `smolvlm-500m` | Translates camera snapshots & screen frames into visual tokens |
+| **`mmproj-GLM-OCR-Q8_0.gguf`** | **462 MB** | `clip` | 348 | `GLM-OCR` | High-precision visual layout & OCR projection adapter |
+| **Embedded Offline ML Kit OCR** | **0 MB** | On-Device | Native | Any Text SLM | Instant ~30ms text extraction; zero weight overhead |
+
+### 🎙️ 3. Audio & Speech-to-Text (STT)
+| Model File | Size | Architecture | Vocab / Tensors | Latency | Capabilities |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **`whisper-base.en-Q8_0.gguf`** | **81 MB** | `whisper` | 51,864 / 247 | ~350ms | Real-time offline voice transcription via `whisper.cpp` |
+
+### 🔍 4. Vector Embeddings & On-Device RAG
+| Model File | Size | Architecture | Vocab / Tensors | Context | Search Latency | Role in MobileAI |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **`bge-small-en-v1.5-q4_k_m.gguf`** | **23.7 MB** | `bert` | 30,522 / 197 | 512 | < 8ms | Dense 384-d embeddings for SQLite cosine similarity |
+| **`all-minilm-l6-v2-q4_k_m.gguf`** | **20.3 MB** | `bert` | 30,522 / 101 | 512 | < 6ms | Lightweight semantic search & passage ranking |
+
+### ⚡ 5. GPU Acceleration Bundles
+| Bundle File | Size | Format | Supported Hardware | Capabilities |
+| :--- | :---: | :---: | :--- | :--- |
+| **`gemma-2b-it-gpu-int4.bin`** | **1.29 GB** | FlatBuffers | Qualcomm Adreno (OpenCL) | GPU offloading via MediaPipe Tasks GenAI |
+
+---
+
+## 🧪 Testing Models Locally (Without a Phone)
+
+MobileAI includes a built-in test harness allowing contributors to test models and application pipelines directly on their development machines:
+
+```powershell
+# 1. Scan, inspect, and verify binary integrity of all models in directory
+python scripts/test_models.py
+
+# 2. Run real application pipelines (Chat prompts, Vision OCR, Agent JSON, RAG)
+python scripts/test_application_pipeline.py
+
+# 3. Run Android JUnit integrity test suite
+./gradlew testDebugUnitTest
+```
+
+### 📲 Deploying Models to Connected Phone
+Deploy any or all verified models to your Android device via ADB:
+```powershell
+# Interactive menu (select model 1-11)
+.\push_model.bat
+
+# Batch deploy all models at once
+.\push_model.bat -All
+```
 
 ---
 
