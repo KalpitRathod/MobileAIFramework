@@ -192,9 +192,13 @@ class LlamaNativeEngine(
                 val full = if (systemInstruction.isNotBlank()) "$systemInstruction\n\n$prompt" else prompt
                 Pair("<start_of_turn>user\n$full<end_of_turn>\n<start_of_turn>model\n", "")
             }
-            name.contains("smollm") || name.contains("qwen") -> {
+            name.contains("smollm") || name.contains("qwen") || name.contains("smol") -> {
                 val sys = if (systemInstruction.isNotBlank()) "<|im_start|>system\n$systemInstruction<|im_end|>\n" else ""
                 Pair("$sys<|im_start|>user\n$prompt<|im_end|>\n<|im_start|>assistant\n", "")
+            }
+            name.contains("glm") -> {
+                val sys = if (systemInstruction.isNotBlank()) "<|system|>\n$systemInstruction" else ""
+                Pair("$sys<|user|>\n$prompt<|assistant|>\n", "")
             }
             name.contains("llama") -> {
                 val sys = if (systemInstruction.isNotBlank()) "<|start_header_id|>system<|end_header_id|>\n$systemInstruction<|eot_id|>" else ""
@@ -212,6 +216,8 @@ class LlamaNativeEngine(
             .replace("<|im_end|>", "")
             .replace("<|eot_id|>", "")
             .replace("<|endoftext|>", "")
+            .replace("<|user|>", "")
+            .replace("<|assistant|>", "")
             .trim()
     }
 
