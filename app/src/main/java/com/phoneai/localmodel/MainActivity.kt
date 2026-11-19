@@ -90,6 +90,17 @@ class MainActivity : AppCompatActivity() {
                         latestCameraBitmap = bitmap
                         val payload = ImagePayload.fromBitmap(bitmap, 80)
                         pendingMultimodalContext = (pendingMultimodalContext ?: MultimodalContext()).copy(cameraImage = payload)
+                        
+                        // Extract text via offline Google ML Kit
+                        lifecycleScope.launch {
+                            val ocrResult = aiEngine.extractTextFromBitmap(bitmap)
+                            val text = ocrResult.getOrDefault("")
+                            if (currentTab == Tab.VISUAL) {
+                                binding.tvVisualOcrResult.text = if (text.isNotBlank()) text else "No text detected in selected photo"
+                                binding.layoutVisualOcrCard.visibility = View.VISIBLE
+                            }
+                        }
+
                         showAttachmentBanner("📷 Image attached (${bitmap.width}x${bitmap.height})")
                         if (binding.etBuddyInput.text.isNullOrBlank()) {
                             binding.etBuddyInput.setText("Convert to text")
@@ -230,8 +241,19 @@ class MainActivity : AppCompatActivity() {
             Tab.DATABASE -> loadKnowledgeEntries()
             Tab.HARDWARE -> refreshHardwareDiagnostics()
             Tab.AGENT -> updateAccessibilityStatus()
-            Tab.VISUAL, Tab.AUDIO -> checkPermissions()
+            Tab.AUDIO -> checkPermissions()
+            Tab.VISUAL -> {
+                checkPermissions()
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED && !isCameraActive) {
+                    startCameraFeed()
+                }
+            }
             Tab.CHAT -> { /* Keep chat as is */ }
+        }
+
+        // Pause camera if navigating away from Visual
+        if (tab != Tab.VISUAL && isCameraActive) {
+            stopCameraFeed()
         }
     }
 
@@ -345,7 +367,7 @@ class MainActivity : AppCompatActivity() {
 
         if (!useCloud && !aiEngine.isInitialized && !isMultimodalVisual) {
             Toast.makeText(this, "Please select an offline model or configure Cloud AI Hub.", Toast.LENGTH_SHORT).show()
-            binding.modelSetupCard.visibility = View.VISIBLE
+            showModelSelectionDialog()
             return
         }
 
@@ -596,31 +618,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSensory() {
-        binding.btnToggleCameraFeed.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
-                return@setOnClickListener
+    private fun startCameraFeed() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
+            return
+        }
+
+        aiEngine.mobileAI.cameraManager.startCamera(binding.cameraTextureView, object : CameraVisionManager.FrameListener {
+            override fun onFrameSampled(bitmap: Bitmap, imagePayload: ImagePayload) {
+                latestCameraBitmap = bitmap
             }
 
-            if (isCameraActive) {
-                aiEngine.mobileAI.cameraManager.stopCamera()
-                isCameraActive = false
-                binding.btnToggleCameraFeed.text = "Start Camera"
-                binding.tvSensoryVisionStatus.text = "Idle"
-            } else {
-                aiEngine.mobileAI.cameraManager.startCamera(binding.cameraTextureView, object : CameraVisionManager.FrameListener {
-                    override fun onFrameSampled(bitmap: Bitmap, imagePayload: ImagePayload) {
-                        latestCameraBitmap = bitmap
-                    }
+            override fun onError(message: String) {
+                Toast.makeText(this@MainActivity, "Camera: $message", Toast.LENGTH_SHORT).show()
+            }
+        })
+        isCameraActive = true
+        binding.tvSensoryVisionStatus.text = "Live"
+    }
 
-                    override fun onError(message: String) {
-                        Toast.makeText(this@MainActivity, "Camera: $message", Toast.LENGTH_SHORT).show()
-                    }
-                })
-                isCameraActive = true
-                binding.btnToggleCameraFeed.text = "Stop Camera"
-                binding.tvSensoryVisionStatus.text = "Streaming"
+    private fun stopCameraFeed() {
+        if (isCameraActive) {
+            aiEngine.mobileAI.cameraManager.stopCamera()
+            isCameraActive = false
+            binding.tvSensoryVisionStatus.text = "Paused"
+        }
+    }
+
+    private fun setupSensory() {
+        // --- 1. GOOGLE LENS CONTROLS ---
+        binding.btnToggleCameraFeed.setOnClickListener {
+            if (isCameraActive) {
+                stopCameraFeed()
+            } else {
+                startCameraFeed()
             }
         }
 
@@ -630,6 +661,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Lens Shutter: Capture + Instant Offline ML Kit OCR
         binding.btnSnapCameraToChat.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
@@ -639,16 +671,80 @@ class MainActivity : AppCompatActivity() {
             aiEngine.mobileAI.cameraManager.captureSnapshot({ bitmap, payload ->
                 latestCameraBitmap = bitmap
                 pendingMultimodalContext = (pendingMultimodalContext ?: MultimodalContext()).copy(cameraImage = payload)
+                
+                // Instant ML Kit OCR extraction
+                lifecycleScope.launch {
+                    val ocrResult = aiEngine.extractTextFromBitmap(bitmap)
+                    val text = ocrResult.getOrDefault("")
+                    binding.tvVisualOcrResult.text = if (text.isNotBlank()) text else "No text detected in snapshot"
+                    binding.layoutVisualOcrCard.visibility = View.VISIBLE
+                }
+                
                 showAttachmentBanner("📷 Camera snapshot attached")
                 if (binding.etBuddyInput.text.isNullOrBlank()) {
                     binding.etBuddyInput.setText("Convert to text")
                 }
-                switchTab(Tab.CHAT)
             }, { err ->
                 Toast.makeText(this, "Capture error: $err", Toast.LENGTH_SHORT).show()
             })
         }
 
+        // Lens Gallery Button
+        binding.btnSensoryPickGallery.setOnClickListener {
+            imagePickerLauncher.launch("image/*")
+        }
+
+        // Lens OCR Bottom Sheet Actions
+        binding.btnVisualAskChat.setOnClickListener {
+            val ocrText = binding.tvVisualOcrResult.text.toString()
+            val query = if (ocrText.isNotBlank() && !ocrText.startsWith("No text")) {
+                "Explain and summarize this detected text:\n$ocrText"
+            } else {
+                "Explain this photo"
+            }
+            binding.etBuddyInput.setText(query)
+            binding.layoutVisualOcrCard.visibility = View.GONE
+            switchTab(Tab.CHAT)
+        }
+
+        binding.btnVisualCopyOcr.setOnClickListener {
+            val ocrText = binding.tvVisualOcrResult.text.toString()
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("OCR Text", ocrText)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "Text copied to clipboard", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnVisualCloseOcr.setOnClickListener {
+            binding.layoutVisualOcrCard.visibility = View.GONE
+        }
+
+        // Lens Mode Switcher (Lens vs Screen Stream)
+        binding.btnLensModeCamera.setOnClickListener {
+            binding.cameraTextureView.visibility = View.VISIBLE
+            binding.ivLensReticle.visibility = View.VISIBLE
+            binding.ivScreenFeedPreview.visibility = View.GONE
+            binding.layoutScreenControls.visibility = View.GONE
+            binding.btnLensModeCamera.setBackgroundResource(R.drawable.bg_tab_pill_red)
+            binding.btnLensModeCamera.setTextColor(ContextCompat.getColor(this, R.color.google_red))
+            binding.btnLensModeScreen.setBackgroundResource(0)
+            binding.btnLensModeScreen.setTextColor(ContextCompat.getColor(this, R.color.white))
+            startCameraFeed()
+        }
+
+        binding.btnLensModeScreen.setOnClickListener {
+            stopCameraFeed()
+            binding.cameraTextureView.visibility = View.GONE
+            binding.ivLensReticle.visibility = View.GONE
+            binding.ivScreenFeedPreview.visibility = View.VISIBLE
+            binding.layoutScreenControls.visibility = View.VISIBLE
+            binding.btnLensModeScreen.setBackgroundResource(R.drawable.bg_tab_pill_blue)
+            binding.btnLensModeScreen.setTextColor(ContextCompat.getColor(this, R.color.google_blue))
+            binding.btnLensModeCamera.setBackgroundResource(0)
+            binding.btnLensModeCamera.setTextColor(ContextCompat.getColor(this, R.color.white))
+        }
+
+        // --- 2. GOOGLE RECORDER VOICE CONTROLS ---
         binding.btnSensoryRecordMic.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
@@ -658,7 +754,8 @@ class MainActivity : AppCompatActivity() {
             if (isRecordingAudio) {
                 aiEngine.mobileAI.audioManager.stopLiveRecording()
                 isRecordingAudio = false
-                binding.btnSensoryRecordMic.text = "Record Audio"
+                binding.tvAudioRecordStatus.text = "Tap microphone to record"
+                binding.tvAudioRecordStatus.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
             } else {
                 aiEngine.mobileAI.audioManager.startLiveRecording(object : AudioInputManager.AudioStreamListener {
                     override fun onAmplitudeUpdate(rmsNormalized: Float) {
@@ -667,13 +764,15 @@ class MainActivity : AppCompatActivity() {
 
                     override fun onRecordingStarted() {
                         isRecordingAudio = true
-                        binding.btnSensoryRecordMic.text = "Stop Recording"
+                        binding.tvAudioRecordStatus.text = "🔴 Recording live audio..."
+                        binding.tvAudioRecordStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.google_red))
                         Toast.makeText(this@MainActivity, "Recording live audio...", Toast.LENGTH_SHORT).show()
                     }
 
                     override fun onRecordingFinished(wavBytes: ByteArray, durationMs: Long) {
                         isRecordingAudio = false
-                        binding.btnSensoryRecordMic.text = "Record Audio"
+                        binding.tvAudioRecordStatus.text = "Audio recorded (${durationMs / 1000}s). Tap to record again."
+                        binding.tvAudioRecordStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.google_green))
                         val payload = AudioPayload.fromBytes(wavBytes, "audio/wav", durationMs)
                         pendingMultimodalContext = (pendingMultimodalContext ?: MultimodalContext()).copy(audioClip = payload)
                         showAttachmentBanner("🎙️ Audio clip attached (${durationMs / 1000}s)")
@@ -682,7 +781,8 @@ class MainActivity : AppCompatActivity() {
 
                     override fun onError(message: String) {
                         isRecordingAudio = false
-                        binding.btnSensoryRecordMic.text = "Record Audio"
+                        binding.tvAudioRecordStatus.text = "Tap microphone to record"
+                        binding.tvAudioRecordStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_secondary))
                         Toast.makeText(this@MainActivity, "Audio error: $message", Toast.LENGTH_SHORT).show()
                     }
                 })
@@ -712,6 +812,17 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
+        binding.btnSensorySendAudioToBuddy.setOnClickListener {
+            val transcript = binding.tvSensoryAudioTranscript.text.toString()
+            if (transcript.isNotBlank() && transcript != "Live speech transcription appears here...") {
+                binding.etBuddyInput.setText(transcript)
+                switchTab(Tab.CHAT)
+            } else {
+                Toast.makeText(this, "Record speech first to get a transcript.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // --- 3. SCREEN CAPTURE & STREAM ---
         binding.btnSensoryScreenStream.setOnClickListener {
             if (isScreenStreamActive) {
                 aiEngine.mobileAI.screenManager.stopScreenStream()
@@ -736,20 +847,6 @@ class MainActivity : AppCompatActivity() {
                 switchTab(Tab.CHAT)
             } else {
                 Toast.makeText(this, "Start Screen Stream first to capture live frames.", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        binding.btnSensoryPickGallery.setOnClickListener {
-            imagePickerLauncher.launch("image/*")
-        }
-
-        binding.btnSensorySendAudioToBuddy.setOnClickListener {
-            val transcript = binding.tvSensoryAudioTranscript.text.toString()
-            if (transcript.isNotBlank() && transcript != "Live speech transcription appears here...") {
-                binding.etBuddyInput.setText(transcript)
-                switchTab(Tab.CHAT)
-            } else {
-                Toast.makeText(this, "Record speech first to get a transcript.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1195,22 +1292,6 @@ class MainActivity : AppCompatActivity() {
         binding.tvModelSubtitle.setOnClickListener {
             showModelSelectionDialog()
         }
-
-        binding.btnImportModel.setOnClickListener {
-            modelPickerLauncher.launch("*/*")
-        }
-
-        binding.btnScanTmp.setOnClickListener {
-            scanLocalTmp()
-        }
-
-        binding.btnDownloadModel.setOnClickListener {
-            downloadSmolLmModel()
-        }
-
-        binding.btnSetupCloudHub.setOnClickListener {
-            showCloudHubDialog()
-        }
     }
 
     private fun checkAndInitializeModel() {
@@ -1229,48 +1310,12 @@ class MainActivity : AppCompatActivity() {
     private fun showVisionProjectorDetectedState(projectorFile: File) {
         val sizeMb = projectorFile.length() / (1024 * 1024)
         updateEngineStatus("Projector Only", R.color.status_loading)
-        binding.modelSetupCard.visibility = View.VISIBLE
-        binding.tvModelSetupTitle.text = "👁️ Vision Projector Detected"
-        binding.tvModelPromptInstructions.text =
-            "Found vision projector '${projectorFile.name}' (${sizeMb}MB).\n\n" +
-            "This file is a multimodal vision projection adapter (for OCR / vision reasoning). It requires a companion base language model GGUF (such as SmolLM2-360M, Qwen2.5-0.5B, Gemma-2-2B, or GLM-Edge) to generate text responses.\n\n" +
-            "Tap '⚡ Auto-Download SmolLM2' below to automatically fetch a lightweight 258MB base model over Wi-Fi, select a file from storage, or use Cloud AI Hub in the meantime."
-    }
-
-    private fun downloadSmolLmModel() {
-        binding.pbModelCopy.visibility = View.VISIBLE
-        binding.tvCopyProgress.visibility = View.VISIBLE
-        binding.btnDownloadModel.isEnabled = false
-        binding.btnDownloadModel.text = "Downloading..."
-
-        lifecycleScope.launch {
-            val result = ModelFileManager.downloadModel(
-                context = this@MainActivity,
-                modelUrl = ModelFileManager.URL_SMOLLM_360M,
-                destFileName = ModelFileManager.DEFAULT_SMOLLM_360M
-            ) { percent, copied, total ->
-                binding.pbModelCopy.isIndeterminate = percent < 0
-                if (percent >= 0) {
-                    binding.pbModelCopy.progress = percent
-                    val mbCopied = copied / (1024 * 1024)
-                    val mbTotal = total / (1024 * 1024)
-                    binding.tvCopyProgress.text = "Downloading SmolLM2: $mbCopied / $mbTotal MB ($percent%)"
-                }
-            }
-
-            binding.pbModelCopy.visibility = View.GONE
-            binding.tvCopyProgress.visibility = View.GONE
-            binding.btnDownloadModel.isEnabled = true
-            binding.btnDownloadModel.text = "⚡ Auto-Download SmolLM2"
-
-            result.onSuccess { file ->
-                Toast.makeText(this@MainActivity, "SmolLM2-360M downloaded successfully!", Toast.LENGTH_SHORT).show()
-                initializeEngineWithModel(file)
-            }.onFailure { error ->
-                Toast.makeText(this@MainActivity, "Download failed: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
-                binding.tvModelPromptInstructions.text = "Download error: ${error.localizedMessage}\nYou can select a model file from storage or use Cloud AI Hub."
-            }
-        }
+        binding.tvModelSubtitle.text = "• Attach Model"
+        Toast.makeText(
+            this,
+            "👁️ Vision projector '${projectorFile.name}' (${sizeMb}MB) active. Please select a base language model.",
+            Toast.LENGTH_LONG
+        ).show()
     }
 
     private fun initializeEngineWithModel(modelFile: File) {
@@ -1291,7 +1336,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateEngineStatus("Loading...", R.color.status_loading)
-        binding.modelSetupCard.visibility = View.GONE
 
         lifecycleScope.launch {
             val result = aiEngine.initializeEngine(
@@ -1306,12 +1350,10 @@ class MainActivity : AppCompatActivity() {
                 val threadInfo = "${profile.cpuTopology.optimalInferenceThreads}T Big-Core"
                 binding.tvModelSubtitle.text = "$engineLabel • ${sizeMb}MB • $threadInfo"
                 updateEngineStatus("Ready", R.color.status_ready)
-                binding.modelSetupCard.visibility = View.GONE
                 Toast.makeText(this@MainActivity, "$engineDesc ready for inference!", Toast.LENGTH_SHORT).show()
             }.onFailure { error ->
                 updateEngineStatus("Init Failed", R.color.status_error)
-                binding.modelSetupCard.visibility = View.VISIBLE
-                binding.tvModelPromptInstructions.text = "Initialization error: ${error.localizedMessage}"
+                Toast.makeText(this@MainActivity, "Initialization error: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -1324,6 +1366,7 @@ class MainActivity : AppCompatActivity() {
 
         val layoutList = dialog.findViewById<LinearLayout>(R.id.layoutModelsList)
         val btnImport = dialog.findViewById<Button>(R.id.btnImportNewModel)
+        val btnScanTmp = dialog.findViewById<Button>(R.id.btnScanTmpDialog)
 
         val installedModels = ModelFileManager.getInstalledModels(this)
 
@@ -1480,6 +1523,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        btnScanTmp?.setOnClickListener {
+            dialog.dismiss()
+            scanLocalTmp()
+        }
+
         btnImport.setOnClickListener {
             dialog.dismiss()
             modelPickerLauncher.launch("*/*")
@@ -1489,8 +1537,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showModelMissingState() {
-        updateEngineStatus("No Model", R.color.status_error)
-        binding.modelSetupCard.visibility = View.VISIBLE
+        updateEngineStatus("Select Model", R.color.status_loading)
+        binding.tvModelSubtitle.text = "• Select Model"
     }
 
     private fun scanLocalTmp() {
@@ -1517,7 +1565,6 @@ class MainActivity : AppCompatActivity() {
                 initializeEngineWithModel(file)
             }.onFailure { error ->
                 Toast.makeText(this@MainActivity, error.message, Toast.LENGTH_LONG).show()
-                binding.tvModelPromptInstructions.text = error.message
             }
         }
     }

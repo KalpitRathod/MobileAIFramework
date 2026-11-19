@@ -6,17 +6,17 @@
     android:layout_height="match_parent"
     android:background="@color/google_bg">
 
-    <!-- Top Action Bar (Google Material 3 Bright Style) -->
+    <!-- Top Action Bar (Google Minimalist Style) -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="52dp"
         android:background="@color/google_surface"
-        android:elevation="2dp"
+        android:elevation="1dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="12dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="10dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <!-- Google Brand Dots & Title -->
@@ -30,33 +30,33 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="6dp"
                 android:orientation="horizontal">
 
                 <View
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
+                    android:layout_width="5dp"
+                    android:layout_height="5dp"
                     android:layout_marginEnd="2dp"
                     android:background="@drawable/ic_stop"
                     android:backgroundTint="@color/google_blue" />
 
                 <View
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
+                    android:layout_width="5dp"
+                    android:layout_height="5dp"
                     android:layout_marginEnd="2dp"
                     android:background="@drawable/ic_stop"
                     android:backgroundTint="@color/google_red" />
 
                 <View
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
+                    android:layout_width="5dp"
+                    android:layout_height="5dp"
                     android:layout_marginEnd="2dp"
                     android:background="@drawable/ic_stop"
                     android:backgroundTint="@color/google_yellow" />
 
                 <View
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
+                    android:layout_width="5dp"
+                    android:layout_height="5dp"
                     android:background="@drawable/ic_stop"
                     android:backgroundTint="@color/google_green" />
             </LinearLayout>
@@ -67,7 +67,7 @@
                 android:letterSpacing="-0.01"
                 android:text="Mobile AI"
                 android:textColor="@color/text_primary"
-                android:textSize="18sp"
+                android:textSize="17sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -77,30 +77,28 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Header Model Selection Pill (Click to Switch Model) -->
+        <!-- Header Model Selection Pill -->
         <LinearLayout
             android:id="@+id/statusPill"
             android:layout_width="wrap_content"
-            android:layout_height="34dp"
-            android:layout_marginEnd="6dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
             android:background="@drawable/bg_tag_boxy"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp">
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
-            <!-- Status Indicator Dot -->
             <View
                 android:id="@+id/statusIndicatorDot"
-                android:layout_width="8dp"
-                android:layout_height="8dp"
-                android:layout_marginEnd="6dp"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:layout_marginEnd="5dp"
                 android:background="@drawable/ic_stop"
                 android:backgroundTint="@color/google_green" />
 
-            <!-- Active Model Label / Status -->
             <TextView
                 android:id="@+id/tvEngineStatus"
                 android:layout_width="wrap_content"
@@ -114,25 +112,23 @@
                 android:id="@+id/tvModelSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="3dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:maxWidth="100dp"
+                android:maxWidth="80dp"
                 android:text="• SmolLM2"
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
 
-            <!-- Dropdown indicator -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="3dp"
                 android:text="▾"
                 android:textColor="@color/text_muted"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
 
-        <!-- Hidden legacy switch model button to keep binding intact -->
         <ImageView
             android:id="@+id/btnSwitchModel"
             android:layout_width="0dp"
@@ -142,23 +138,22 @@
         <!-- Cloud AI Hub Button -->
         <ImageView
             android:id="@+id/btnCloudHub"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Cloud AI Hub"
-            android:padding="6dp"
+            android:padding="5dp"
             android:src="@drawable/ic_cloud"
             app:tint="@color/google_blue" />
 
         <!-- Hardware Diagnostics Dialog Button -->
         <ImageView
             android:id="@+id/btnHardwareInfo"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_marginStart="2dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Hardware Diagnostics"
-            android:padding="6dp"
+            android:padding="5dp"
             android:src="@drawable/ic_model"
             app:tint="@color/text_secondary" />
 
@@ -171,120 +166,29 @@
         android:background="@color/google_border_light"
         app:layout_constraintTop_toBottomOf="@id/topBar" />
 
-    <!-- Model Setup / Missing Banner -->
-    <LinearLayout
-        android:id="@+id/modelSetupCard"
+    <!-- Linear Progress Bar for Model Copy / Loading -->
+    <ProgressBar
+        android:id="@+id/pbModelCopy"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:indeterminate="true"
+        android:progressTint="@color/google_blue"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/topBarDivider" />
+
+    <TextView
+        android:id="@+id/tvCopyProgress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="12dp"
-        android:background="@drawable/bg_card_boxy"
-        android:elevation="2dp"
-        android:orientation="vertical"
-        android:padding="14dp"
+        android:background="#F8F9FA"
+        android:gravity="center"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:textColor="@color/google_blue"
+        android:textSize="11sp"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/topBarDivider">
-
-        <TextView
-            android:id="@+id/tvModelSetupTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Local Model Weights Required"
-            android:textColor="@color/google_blue"
-            android:textSize="15sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvModelPromptInstructions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Select a .gguf or MediaPipe bundle to run on-device inference."
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
-
-        <ProgressBar
-            android:id="@+id/pbModelCopy"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:indeterminateTint="@color/google_blue"
-            android:progressTint="@color/google_blue"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/tvCopyProgress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/google_blue"
-            android:textSize="11sp"
-            android:visibility="gone" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnScanTmp"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button_royal"
-                android:text="Scan /data/local/tmp"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="11sp" />
-
-            <Button
-                android:id="@+id/btnImportModel"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_boxy"
-                android:text="Select File"
-                android:textAllCaps="false"
-                android:textColor="@color/google_blue"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnDownloadModel"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button_gold"
-                android:text="⚡ Auto-Download SmolLM2"
-                android:textAllCaps="false"
-                android:textColor="@color/text_primary"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/btnSetupCloudHub"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_boxy"
-                android:text="🌐 Cloud AI Hub"
-                android:textAllCaps="false"
-                android:textColor="@color/google_blue"
-                android:textSize="11sp" />
-        </LinearLayout>
-    </LinearLayout>
+        app:layout_constraintTop_toBottomOf="@id/pbModelCopy" />
 
     <!-- MAIN CONTENT CONTAINER -->
     <FrameLayout
@@ -292,7 +196,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@id/bottomBarDivider"
-        app:layout_constraintTop_toBottomOf="@id/modelSetupCard">
+        app:layout_constraintTop_toBottomOf="@id/topBarDivider">
 
         <!-- ========================================== -->
         <!-- 1. CHAT TAB (Google Blue)                 -->
@@ -310,9 +214,9 @@
                 android:layout_height="wrap_content"
                 android:background="@color/google_surface"
                 android:paddingStart="12dp"
-                android:paddingTop="8dp"
+                android:paddingTop="6dp"
                 android:paddingEnd="12dp"
-                android:paddingBottom="8dp"
+                android:paddingBottom="6dp"
                 android:scrollbars="none"
                 app:layout_constraintTop_toTopOf="parent">
 
@@ -328,9 +232,9 @@
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_tag_boxy"
                         android:paddingStart="12dp"
-                        android:paddingTop="6dp"
+                        android:paddingTop="5dp"
                         android:paddingEnd="12dp"
-                        android:paddingBottom="6dp"
+                        android:paddingBottom="5dp"
                         android:text="Benchmark tok/s"
                         android:textColor="@color/google_blue"
                         android:textSize="12sp"
@@ -343,9 +247,9 @@
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_tag_boxy"
                         android:paddingStart="12dp"
-                        android:paddingTop="6dp"
+                        android:paddingTop="5dp"
                         android:paddingEnd="12dp"
-                        android:paddingBottom="6dp"
+                        android:paddingBottom="5dp"
                         android:text="Big-Core Pinning"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
@@ -357,9 +261,9 @@
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_tag_boxy"
                         android:paddingStart="12dp"
-                        android:paddingTop="6dp"
+                        android:paddingTop="5dp"
                         android:paddingEnd="12dp"
-                        android:paddingBottom="6dp"
+                        android:paddingBottom="5dp"
                         android:text="RAM &amp; KV-Cache"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
@@ -371,9 +275,9 @@
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_tag_boxy"
                         android:paddingStart="12dp"
-                        android:paddingTop="6dp"
+                        android:paddingTop="5dp"
                         android:paddingEnd="12dp"
-                        android:paddingBottom="6dp"
+                        android:paddingBottom="5dp"
                         android:text="Phone Agent Guide"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
@@ -385,8 +289,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:clipToPadding="false"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
                 app:layout_constraintBottom_toTopOf="@id/layoutAttachmentPreview"
                 app:layout_constraintTop_toBottomOf="@id/suggestionsScroll" />
 
@@ -399,9 +303,9 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="14dp"
-                android:paddingTop="8dp"
+                android:paddingTop="6dp"
                 android:paddingEnd="14dp"
-                android:paddingBottom="8dp"
+                android:paddingBottom="6dp"
                 android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@id/layoutChatInput">
 
@@ -426,468 +330,565 @@
                     app:tint="@color/google_blue" />
             </LinearLayout>
 
-            <!-- Input Bar (Google Pill Style) -->
+            <!-- Minimalist Input Bar -->
             <LinearLayout
                 android:id="@+id/layoutChatInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/google_surface"
-                android:elevation="4dp"
+                android:elevation="3dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="8dp"
-                android:paddingTop="8dp"
+                android:paddingTop="6dp"
                 android:paddingEnd="8dp"
-                android:paddingBottom="8dp"
+                android:paddingBottom="6dp"
                 app:layout_constraintBottom_toBottomOf="parent">
 
                 <ImageView
                     android:id="@+id/btnChatCamera"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Attach Camera Snapshot"
-                    android:padding="7dp"
+                    android:contentDescription="Camera Lens"
+                    android:padding="6dp"
                     android:src="@drawable/ic_camera"
                     app:tint="@color/google_red" />
 
                 <ImageView
                     android:id="@+id/btnChatMic"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Voice Input"
-                    android:padding="7dp"
+                    android:padding="6dp"
                     android:src="@drawable/ic_mic"
                     app:tint="@color/google_green" />
 
                 <ImageView
                     android:id="@+id/btnChatScreen"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Screen Capture"
-                    android:padding="7dp"
+                    android:contentDescription="Screen"
+                    android:padding="6dp"
                     android:src="@drawable/ic_screen"
                     app:tint="@color/google_blue" />
 
                 <EditText
                     android:id="@+id/etBuddyInput"
                     android:layout_width="0dp"
-                    android:layout_height="42dp"
+                    android:layout_height="40dp"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_input_boxy"
-                    android:hint="Ask Mobile AI assistant..."
+                    android:hint="Ask Mobile AI..."
                     android:imeOptions="actionSend"
                     android:inputType="textCapSentences|textMultiLine"
                     android:maxLines="3"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_muted"
                     android:textSize="13sp" />
 
                 <ImageView
                     android:id="@+id/btnClearChatHistory"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Clear Chat"
-                    android:padding="7dp"
+                    android:padding="6dp"
                     android:src="@drawable/ic_delete"
                     app:tint="@color/text_secondary" />
 
                 <ImageView
                     android:id="@+id/fabSendBuddy"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
                     android:layout_marginStart="4dp"
                     android:background="@drawable/bg_button_royal"
                     android:clickable="true"
                     android:contentDescription="Send"
                     android:elevation="2dp"
                     android:focusable="true"
-                    android:padding="10dp"
+                    android:padding="9dp"
                     android:src="@drawable/ic_send"
                     app:tint="@color/white" />
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- ========================================== -->
-        <!-- 2. VISUAL TAB (Google Red)                -->
-        <!-- ========================================== -->
-        <ScrollView
+        <!-- ============================================================== -->
+        <!-- 2. VISUAL TAB - GOOGLE LENS STYLE (Immersive & Minimalistic)  -->
+        <!-- ============================================================== -->
+        <FrameLayout
             android:id="@+id/viewVisual"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/google_bg"
+            android:background="#000000"
             android:visibility="gone">
 
+            <!-- Live Camera TextureView (Full Viewport) -->
+            <TextureView
+                android:id="@+id/cameraTextureView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- Google Lens Viewfinder Center Focus Reticle -->
+            <ImageView
+                android:id="@+id/ivLensReticle"
+                android:layout_width="220dp"
+                android:layout_height="220dp"
+                android:layout_gravity="center"
+                android:contentDescription="Focus Area"
+                android:src="@drawable/bg_lens_reticle" />
+
+            <!-- Screen Capture Feed Mirror (Visible in Screen Mode) -->
+            <ImageView
+                android:id="@+id/ivScreenFeedPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#121212"
+                android:contentDescription="Screen Stream"
+                android:scaleType="fitCenter"
+                android:visibility="gone" />
+
+            <!-- Top Floating Bar: Flip, Mode Pills, Status -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_gravity="top"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="16dp">
 
-                <!-- Header Title -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Visual Perception &amp; OCR"
-                    android:textColor="@color/google_red"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                <!-- Flip Camera Lens Button -->
+                <ImageView
+                    android:id="@+id/btnFlipCameraFacing"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_lens_control"
+                    android:clickable="true"
+                    android:contentDescription="Flip Lens"
+                    android:focusable="true"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_flip_camera"
+                    app:tint="@color/white" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Real-time camera frames, instant on-device OCR, and live screen capture."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
+                <!-- Spacer -->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
 
-                <!-- 1. Camera Viewfinder Card -->
+                <!-- Lens Mode Switcher Pills -->
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_card_boxy"
-                    android:elevation="1dp"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="📷 Live Camera Viewfinder"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvSensoryVisionStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_tag_boxy"
-                            android:paddingStart="8dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="8dp"
-                            android:paddingBottom="3dp"
-                            android:text="Idle"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <!-- Camera Viewfinder -->
-                    <TextureView
-                        android:id="@+id/cameraTextureView"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="10dp" />
-
-                    <!-- Camera Action Buttons -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="horizontal">
-
-                        <Button
-                            android:id="@+id/btnToggleCameraFeed"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_button_royal"
-                            android:backgroundTint="@color/google_red"
-                            android:text="Start Camera"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <Button
-                            android:id="@+id/btnFlipCameraFacing"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="4dp"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_tag_boxy"
-                            android:text="Flip Lens"
-                            android:textAllCaps="false"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <Button
-                            android:id="@+id/btnSnapCameraToChat"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="4dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_button_royal"
-                            android:text="Capture to Chat"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- 2. Gallery OCR Card -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_card_boxy"
-                    android:elevation="1dp"
-                    android:orientation="vertical"
-                    android:padding="14dp">
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_lens_control"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp">
 
                     <TextView
+                        android:id="@+id/btnLensModeCamera"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔍 Gallery Photo &amp; Document OCR"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14sp"
+                        android:layout_height="24dp"
+                        android:background="@drawable/bg_tab_pill_red"
+                        android:gravity="center"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="📷 Lens"
+                        android:textColor="@color/google_red"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/btnLensModeScreen"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:text="Pick an image from your gallery for instant offline text extraction and AI analysis."
-                        android:textColor="@color/text_secondary"
+                        android:layout_height="24dp"
+                        android:gravity="center"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="📱 Screen"
+                        android:textColor="@color/white"
                         android:textSize="11sp" />
-
-                    <Button
-                        android:id="@+id/btnSensoryPickGallery"
-                        android:layout_width="match_parent"
-                        android:layout_height="42dp"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_tag_boxy"
-                        android:text="📁 Select Photo from Gallery"
-                        android:textAllCaps="false"
-                        android:textColor="@color/google_blue"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- 3. Screen Stream & Mirror Card -->
+                <!-- Spacer -->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <!-- Status Chip -->
+                <TextView
+                    android:id="@+id/tvSensoryVisionStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_lens_control"
+                    android:gravity="center"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="Live"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Bottom Floating Controls: Gallery, Google Lens Shutter, Stream -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginBottom="20dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <!-- 1. Gallery Photo Picker Button -->
+                <ImageView
+                    android:id="@+id/btnSensoryPickGallery"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_lens_control"
+                    android:clickable="true"
+                    android:contentDescription="Gallery Photo"
+                    android:elevation="4dp"
+                    android:focusable="true"
+                    android:padding="11dp"
+                    android:src="@drawable/ic_gallery"
+                    app:tint="@color/white" />
+
+                <!-- 2. Google Lens Circular Shutter Button -->
+                <FrameLayout
+                    android:id="@+id/btnSnapCameraToChat"
+                    android:layout_width="68dp"
+                    android:layout_height="68dp"
+                    android:layout_marginStart="36dp"
+                    android:layout_marginEnd="36dp"
+                    android:background="@drawable/bg_lens_shutter"
+                    android:clickable="true"
+                    android:elevation="6dp"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="Capture"
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/google_blue" />
+                </FrameLayout>
+
+                <!-- 3. Screen Stream / Camera Pause Toggle -->
+                <ImageView
+                    android:id="@+id/btnToggleCameraFeed"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_lens_control"
+                    android:clickable="true"
+                    android:contentDescription="Toggle Feed"
+                    android:elevation="4dp"
+                    android:focusable="true"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_screen"
+                    app:tint="@color/white" />
+
+            </LinearLayout>
+
+            <!-- Hidden Screen Controls for Functional Binding Compatibility -->
+            <LinearLayout
+                android:id="@+id/layoutScreenControls"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginBottom="90dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/btnSensoryScreenStream"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_button_royal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="Start Screen Stream"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/btnSensorySendScreenToBuddy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:background="@drawable/bg_button_gold"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="Send to Assistant"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Floating Detected OCR Text Sheet (Google Lens Style) -->
+            <LinearLayout
+                android:id="@+id/layoutVisualOcrCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@drawable/bg_card_boxy"
+                android:elevation="12dp"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_card_boxy"
-                    android:elevation="1dp"
-                    android:orientation="vertical"
-                    android:padding="14dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="📱 Live Screen Recording"
-                        android:textColor="@color/text_primary"
+                        android:layout_weight="1"
+                        android:text="🔍 Detected Text (Offline OCR)"
+                        android:textColor="@color/google_blue"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <ImageView
-                        android:id="@+id/ivScreenFeedPreview"
-                        android:layout_width="match_parent"
-                        android:layout_height="140dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@color/google_surface_variant"
-                        android:contentDescription="Screen Frame Preview"
-                        android:scaleType="fitCenter" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="horizontal">
-
-                        <Button
-                            android:id="@+id/btnSensoryScreenStream"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_tag_boxy"
-                            android:text="Start Screen Stream"
-                            android:textAllCaps="false"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <Button
-                            android:id="@+id/btnSensorySendScreenToBuddy"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="4dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_button_royal"
-                            android:text="Send Screen to Chat"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                        android:id="@+id/btnVisualCloseOcr"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Close"
+                        android:padding="5dp"
+                        android:src="@drawable/ic_close"
+                        app:tint="@color/text_secondary" />
                 </LinearLayout>
 
-            </LinearLayout>
-        </ScrollView>
-
-        <!-- ========================================== -->
-        <!-- 3. AUDIO TAB (Google Green)               -->
-        <!-- ========================================== -->
-        <ScrollView
-            android:id="@+id/viewAudio"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/google_bg"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <!-- Header Title -->
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/tvVisualOcrResult"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Voice &amp; Audio Processing"
-                    android:textColor="@color/google_green"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="On-device speech recognition, acoustic waveform monitoring, and voice transcription."
-                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_tag_boxy"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="2dp"
+                    android:maxLines="4"
+                    android:padding="10dp"
+                    android:text="Detected text will appear here..."
+                    android:textColor="@color/text_primary"
                     android:textSize="12sp" />
 
-                <!-- 1. Live VU Waveform Card -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_card_boxy"
-                    android:elevation="1dp"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🎙️ Live Acoustic Level &amp; Waveform"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <ProgressBar
-                        android:id="@+id/pbAudioWaveform"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="12dp"
-                        android:layout_marginTop="12dp"
-                        android:max="100"
-                        android:progress="0"
-                        android:progressTint="@color/google_green" />
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
 
                     <Button
-                        android:id="@+id/btnSensoryRecordMic"
-                        android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:layout_marginTop="14dp"
+                        android:id="@+id/btnVisualCopyOcr"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_pill_outlined"
+                        android:text="📋 Copy Text"
+                        android:textAllCaps="false"
+                        android:textColor="@color/google_blue"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnVisualAskChat"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
                         android:background="@drawable/bg_button_royal"
-                        android:backgroundTint="@color/google_green"
-                        android:text="Record Audio"
+                        android:text="💬 Ask Assistant"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- 2. Speech-to-Text Transcription Card -->
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <!-- ============================================================== -->
+        <!-- 3. AUDIO TAB - GOOGLE RECORDER STYLE (Minimalistic Voice)     -->
+        <!-- ============================================================== -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/viewAudio"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/google_bg"
+            android:padding="20dp"
+            android:visibility="gone">
+
+            <!-- Title Header -->
+            <TextView
+                android:id="@+id/tvAudioHeaderTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Voice &amp; Speech"
+                android:textColor="@color/google_green"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvAudioHeaderSub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="On-device speech recognition &amp; acoustic analysis."
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvAudioHeaderTitle" />
+
+            <!-- Center Google Recorder Style Microphone Circle -->
+            <FrameLayout
+                android:id="@+id/layoutAudioPulse"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_tab_pill_green"
+                app:layout_constraintBottom_toTopOf="@id/tvAudioRecordStatus"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvAudioHeaderSub">
+
+                <!-- Tap to Record Button -->
+                <FrameLayout
+                    android:id="@+id/btnSensoryRecordMic"
+                    android:layout_width="74dp"
+                    android:layout_height="74dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_button_royal"
+                    android:backgroundTint="@color/google_green"
+                    android:clickable="true"
+                    android:elevation="4dp"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="Record"
+                        android:src="@drawable/ic_mic"
+                        app:tint="@color/white" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <!-- Recording Status Text -->
+            <TextView
+                android:id="@+id/tvAudioRecordStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="Tap microphone to record"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@id/pbAudioWaveform"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <!-- Live Audio VU Waveform Meter -->
+            <ProgressBar
+                android:id="@+id/pbAudioWaveform"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="240dp"
+                android:layout_height="10dp"
+                android:layout_marginBottom="24dp"
+                android:max="100"
+                android:progress="0"
+                android:progressTint="@color/google_green"
+                app:layout_constraintBottom_toTopOf="@id/cardAudioTranscript"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <!-- Bottom Card: Live Transcript & Actions -->
+            <LinearLayout
+                android:id="@+id/cardAudioTranscript"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card_boxy"
+                android:elevation="2dp"
+                android:orientation="vertical"
+                android:padding="16dp"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📝 Speech Transcription"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSensoryAudioTranscript"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_tag_boxy"
+                    android:lineSpacingExtra="3dp"
+                    android:minHeight="48dp"
+                    android:padding="10dp"
+                    android:text="Live speech transcription appears here..."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_card_boxy"
-                    android:elevation="1dp"
-                    android:orientation="vertical"
-                    android:padding="14dp">
+                    android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📝 Speech-to-Text Transcription"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14sp"
+                    <Button
+                        android:id="@+id/btnSensorySpeechToText"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_pill_outlined"
+                        android:text="Speech-to-Text"
+                        android:textAllCaps="false"
+                        android:textColor="@color/google_blue"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvSensoryAudioTranscript"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_input_boxy"
-                        android:lineSpacingExtra="3dp"
-                        android:minHeight="50dp"
-                        android:padding="12dp"
-                        android:text="Live speech transcription appears here..."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:orientation="horizontal">
-
-                        <Button
-                            android:id="@+id/btnSensorySpeechToText"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_tag_boxy"
-                            android:text="Speech-to-Text"
-                            android:textAllCaps="false"
-                            android:textColor="@color/google_blue"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <Button
-                            android:id="@+id/btnSensorySendAudioToBuddy"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="4dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_button_gold"
-                            android:text="Send to Chat"
-                            android:textAllCaps="false"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                    <Button
+                        android:id="@+id/btnSensorySendAudioToBuddy"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_button_royal"
+                        android:text="Send to Chat"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-
             </LinearLayout>
-        </ScrollView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- ========================================== -->
         <!-- 4. DATABASE TAB (Google Yellow / Amber)   -->
@@ -905,7 +906,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/google_surface"
-                android:elevation="2dp"
+                android:elevation="1dp"
                 android:orientation="vertical"
                 android:padding="12dp"
                 app:layout_constraintTop_toTopOf="parent">
@@ -913,17 +914,17 @@
                 <!-- Search Input Pill -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="42dp"
                     android:background="@drawable/bg_input_boxy"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp">
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
 
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:layout_marginEnd="10dp"
+                        android:layout_marginEnd="8dp"
                         android:src="@drawable/ic_search"
                         app:tint="@color/text_secondary" />
 
@@ -942,7 +943,7 @@
                 <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="8dp"
                     android:scrollbars="none">
 
                     <LinearLayout
@@ -1102,7 +1103,7 @@
             <LinearLayout
                 android:id="@+id/fabNewKnowledge"
                 android:layout_width="wrap_content"
-                android:layout_height="46dp"
+                android:layout_height="44dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_button_gold"
@@ -1128,7 +1129,7 @@
                     android:layout_height="wrap_content"
                     android:text="Add Vector Doc"
                     android:textColor="@color/text_primary"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -1144,7 +1145,6 @@
             android:background="@color/google_bg"
             android:visibility="gone">
 
-            <!-- Accessibility Status Header -->
             <LinearLayout
                 android:id="@+id/layoutAgentHeader"
                 android:layout_width="match_parent"
@@ -1191,7 +1191,6 @@
                     android:textSize="11sp" />
             </LinearLayout>
 
-            <!-- Goal Input Card -->
             <LinearLayout
                 android:id="@+id/layoutAgentGoalCard"
                 android:layout_width="match_parent"
@@ -1531,9 +1530,9 @@
     <LinearLayout
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="58dp"
         android:background="@color/google_surface"
-        android:elevation="8dp"
+        android:elevation="6dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent">
@@ -1552,8 +1551,8 @@
 
             <LinearLayout
                 android:id="@+id/tabBuddyPill"
-                android:layout_width="48dp"
-                android:layout_height="28dp"
+                android:layout_width="44dp"
+                android:layout_height="26dp"
                 android:background="@drawable/bg_tab_pill_blue"
                 android:gravity="center">
 
@@ -1569,7 +1568,7 @@
                 android:id="@+id/tvTabBuddy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="2dp"
                 android:text="Chat"
                 android:textColor="@color/google_blue"
                 android:textSize="11sp"
@@ -1590,8 +1589,8 @@
 
             <LinearLayout
                 android:id="@+id/tabVisualPill"
-                android:layout_width="48dp"
-                android:layout_height="28dp"
+                android:layout_width="44dp"
+                android:layout_height="26dp"
                 android:background="@null"
                 android:gravity="center">
 
@@ -1607,7 +1606,7 @@
                 android:id="@+id/tvTabVisual"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="2dp"
                 android:text="Visual"
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
@@ -1627,8 +1626,8 @@
 
             <LinearLayout
                 android:id="@+id/tabAudioPill"
-                android:layout_width="48dp"
-                android:layout_height="28dp"
+                android:layout_width="44dp"
+                android:layout_height="26dp"
                 android:background="@null"
                 android:gravity="center">
 
@@ -1644,7 +1643,7 @@
                 android:id="@+id/tvTabAudio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="2dp"
                 android:text="Audio"
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
@@ -1664,8 +1663,8 @@
 
             <LinearLayout
                 android:id="@+id/tabKnowledgePill"
-                android:layout_width="48dp"
-                android:layout_height="28dp"
+                android:layout_width="44dp"
+                android:layout_height="26dp"
                 android:background="@null"
                 android:gravity="center">
 
@@ -1681,7 +1680,7 @@
                 android:id="@+id/tvTabKnowledge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="2dp"
                 android:text="Database"
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
