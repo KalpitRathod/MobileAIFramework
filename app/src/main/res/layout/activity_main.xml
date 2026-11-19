@@ -284,6 +284,64 @@
                 </LinearLayout>
             </HorizontalScrollView>
 
+            <!-- Chat Model Needed Banner (Visible when no model is active) -->
+            <LinearLayout
+                android:id="@+id/layoutChatModelPrompt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/bg_card_boxy"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/suggestionsScroll">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:text="💬"
+                    android:textSize="22sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No Chat Model Loaded"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Select an on-device language model (SmolLM2, Qwen2.5, Gemma-2) for offline chat."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnSelectChatModelPrompt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_pill_outlined"
+                    android:text="Select Model"
+                    android:textAllCaps="false"
+                    android:textColor="@color/google_blue"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvBuddyMessages"
                 android:layout_width="match_parent"
@@ -292,7 +350,7 @@
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp"
                 app:layout_constraintBottom_toTopOf="@id/layoutAttachmentPreview"
-                app:layout_constraintTop_toBottomOf="@id/suggestionsScroll" />
+                app:layout_constraintTop_toBottomOf="@id/layoutChatModelPrompt" />
 
             <!-- Multimodal Attachment Preview Banner -->
             <LinearLayout
@@ -484,6 +542,23 @@
                     android:layout_width="0dp"
                     android:layout_height="1dp"
                     android:layout_weight="1" />
+
+                <!-- Active Visual Model Pill -->
+                <TextView
+                    android:id="@+id/tvLensModelBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_lens_control"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="👁️ ML Kit OCR"
+                    android:textColor="@color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
                 <!-- Lens Mode Switcher Pills -->
                 <LinearLayout
@@ -761,6 +836,25 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tvAudioHeaderTitle" />
 
+            <!-- Audio / Whisper Model Status Pill -->
+            <TextView
+                android:id="@+id/tvAudioModelStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_pill_outlined"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="🎙️ Tap to select Whisper ASR GGUF"
+                android:textColor="@color/google_green"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvAudioHeaderSub" />
+
             <!-- Center Google Recorder Style Microphone Circle -->
             <FrameLayout
                 android:id="@+id/layoutAudioPulse"
@@ -770,7 +864,7 @@
                 app:layout_constraintBottom_toTopOf="@id/tvAudioRecordStatus"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvAudioHeaderSub">
+                app:layout_constraintTop_toBottomOf="@id/tvAudioModelStatus">
 
                 <!-- Tap to Record Button -->
                 <FrameLayout

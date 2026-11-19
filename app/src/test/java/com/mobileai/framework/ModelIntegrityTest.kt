@@ -58,7 +58,35 @@ class ModelIntegrityTest {
             } else {
                 assertFalse("Base model ${file.name} should NOT be classified as Vision Projector", isProjector)
             }
+
+            // 5. Verify functional role mapping to tabs
+            val role = ModelFileManager.getModelRole(file.name)
+            assertNotNull("Model ${file.name} must have a valid functional role", role)
+            when {
+                file.name.contains("whisper", ignoreCase = true) ->
+                    assertEquals("Whisper model must be assigned to AUDIO", com.phoneai.localmodel.ModelRole.AUDIO, role)
+                file.name.contains("minilm", ignoreCase = true) || file.name.contains("bge", ignoreCase = true) ->
+                    assertEquals("Embedding model must be assigned to EMBEDDING", com.phoneai.localmodel.ModelRole.EMBEDDING, role)
+                file.name.contains("vlm", ignoreCase = true) || file.name.contains("ocr", ignoreCase = true) || isProjector ->
+                    assertEquals("Vision/OCR model must be assigned to VISUAL", com.phoneai.localmodel.ModelRole.VISUAL, role)
+                else ->
+                    assertEquals("LLM must be assigned to CHAT", com.phoneai.localmodel.ModelRole.CHAT, role)
+            }
         }
+    }
+
+    @Test
+    fun testTabRoleMappings() {
+        assertEquals(com.phoneai.localmodel.ModelRole.CHAT, ModelFileManager.getModelRole("smollm2-360m-instruct-q4_k_m.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.CHAT, ModelFileManager.getModelRole("qwen2.5-0.5b-instruct-q4_k_m.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.CHAT, ModelFileManager.getModelRole("gemma-2-2b-it-q4_k_m.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.VISUAL, ModelFileManager.getModelRole("smolvlm-500m-instruct-q4_k_m.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.VISUAL, ModelFileManager.getModelRole("mmproj-SmolVLM-500M-Instruct-f16.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.VISUAL, ModelFileManager.getModelRole("GLM-OCR-Q8_0.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.VISUAL, ModelFileManager.getModelRole("mmproj-GLM-OCR-Q8_0.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.AUDIO, ModelFileManager.getModelRole("whisper-base.en-Q8_0.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.EMBEDDING, ModelFileManager.getModelRole("all-minilm-l6-v2-q4_k_m.gguf"))
+        assertEquals(com.phoneai.localmodel.ModelRole.EMBEDDING, ModelFileManager.getModelRole("bge-small-en-v1.5-q4_k_m.gguf"))
     }
 
     @Test

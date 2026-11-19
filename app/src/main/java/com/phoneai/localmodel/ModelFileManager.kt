@@ -12,6 +12,18 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
+enum class ModelRole(
+    val categoryName: String,
+    val icon: String,
+    val tabName: String,
+    val description: String
+) {
+    CHAT("Chat & Reasoning", "💬", "Chat", "Language model for text generation, chat & reasoning (LLM)"),
+    VISUAL("Visual & OCR", "👁️", "Visual", "Vision-Language model or projector for camera & screen (VLM/mmproj)"),
+    AUDIO("Audio & Speech", "🎙️", "Audio", "Whisper speech-to-text audio transcription (ASR)"),
+    EMBEDDING("Vector Database", "🗄️", "Database", "Dense semantic vector embeddings for on-device RAG")
+}
+
 object ModelFileManager {
 
     // Default recommended models
@@ -33,10 +45,21 @@ object ModelFileManager {
     )
 
     /**
+     * Categorizes a model file according to its primary functional purpose.
+     */
+    fun getModelRole(fileName: String): ModelRole {
+        val n = fileName.lowercase()
+        return when {
+            isAudioModel(n) -> ModelRole.AUDIO
+            isEmbeddingModel(n) -> ModelRole.EMBEDDING
+            isVisionProjector(n) || isVisionModel(n) -> ModelRole.VISUAL
+            else -> ModelRole.CHAT
+        }
+    }
+
+    /**
      * Determines whether a file is a multimodal vision projector (adapter)
-     * such as mmproj-GLM-OCR, mmproj-model, etc.
-     * These files only contain vision projection weights and CANNOT be loaded
-     * as standalone text language models.
+     * such as mmproj-GLM-OCR, mmproj-SmolVLM, etc.
      */
     fun isVisionProjector(fileName: String): Boolean {
         val n = fileName.lowercase()
@@ -44,64 +67,127 @@ object ModelFileManager {
     }
 
     /**
-     * List all model files installed in the app files directory.
-     * Sorted: Base LLMs first, then vision projectors, then by size.
+     * Determines whether a file is a vision-language base model (e.g. SmolVLM, GLM-OCR).
      */
-    fun getInstalledModels(context: Context): List<File> {
-        val list = mutableListOf<File>()
-        context.filesDir.listFiles()?.forEach { file ->
-            val n = file.name.lowercase()
-            if ((n.endsWith(".gguf") || n.endsWith(".bin") || n.endsWith(".task")) && file.length() > 10_000_000L) {
-                list.add(file)
+    fun isVisionModel(fileName: String): Boolean {
+        val n = fileName.lowercase()
+        return (n.contains("smolvlm") || n.contains("vlm") || n.contains("glm-ocr") || n.contains("vision")) && !isVisionProjector(n)
+    }
+
+    /**
+     * Determines whether a file is an audio transcription model (e.g. Whisper).
+     */
+    fun isAudioModel(fileName: String): Boolean {
+        val n = fileName.lowercase()
+        return n.contains("whisper")
+    }
+
+    /**
+     * Determines whether a file is a dedicated vector embedding model (e.g. MiniLM, BGE, BERT).
+     */
+    fun isEmbeddingModel(fileName: String): Boolean {
+        val n = fileName.lowercase()
+        return n.contains("minilm") || n.contains("bge") || n.contains("embed") || n.contains("bert")
+    }
+
+    /**
+     * Determines whether a file is a standalone conversational language model (LLM).
+     */
+    fun isChatModel(fileName: String): Boolean {
+        val n = fileName.lowercase()
+        return !isVisionProjector(n) && !isEmbeddingModel(n) && !isAudioModel(n)
+    }
+
+    /**
+     * Finds companion vision projector (mmproj) for a base vision model.
+     */
+    fun getCompanionProjector(context: Context, baseModelName: String): File? {
+        val installed = getInstalledModels(context)
+        val lowerBase = baseModelName.lowercase()
+        return when {
+            lowerBase.contains("smolvlm") -> {
+                installed.firstOrNull { it.name.contains("mmproj", ignoreCase = true) && it.name.contains("smolvlm", ignoreCase = true) }
+            }
+            lowerBase.contains("glm") -> {
+                installed.firstOrNull { it.name.contains("mmproj", ignoreCase = true) && it.name.contains("glm", ignoreCase = true) }
+            }
+            else -> {
+                installed.firstOrNull { isVisionProjector(it.name) }
             }
         }
-        return list.sortedWith(
+    }
+
+    /**
+     * List all model files installed in app private files, /data/local/tmp, or Downloads.
+     */
+    fun getInstalledModels(context: Context): List<File> {
+        val list = mutableMapOf<String, File>()
+        val searchDirs = mutableListOf<File>()
+
+        // 1. App internal filesDir
+        searchDirs.add(context.filesDir)
+
+        // 2. App external filesDir
+        try {
+            context.getExternalFilesDir(null)?.let { searchDirs.add(it) }
+        } catch (_: Exception) {}
+
+        // 3. Developer /data/local/tmp (ADB pushed models)
+        searchDirs.add(File("/data/local/tmp"))
+
+        // 4. Download directory on device storage
+        try {
+            searchDirs.add(File("/sdcard/Download"))
+            searchDirs.add(File("/sdcard/Download/MobileAIFramework"))
+            android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)?.let {
+                searchDirs.add(it)
+            }
+        } catch (_: Exception) {}
+
+        for (dir in searchDirs) {
+            try {
+                if (dir.exists() && dir.canRead()) {
+                    dir.listFiles()?.forEach { file ->
+                        val n = file.name.lowercase()
+                        if ((n.endsWith(".gguf") || n.endsWith(".bin") || n.endsWith(".task")) && file.length() > 5_000_000L) {
+                            if (!list.containsKey(file.name)) {
+                                list[file.name] = file
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+
+        return list.values.sortedWith(
             compareBy(
                 { isVisionProjector(it.name) },
-                { !it.name.endsWith(".gguf") },
-                { it.length() }
+                { getModelRole(it.name).ordinal },
+                { -it.length() }
             )
         )
     }
 
     /**
-     * Look for an existing base language model in the app internal files directory.
-     * Specifically EXCLUDES vision projectors (mmproj-*.gguf) which require a base model.
+     * Look for an existing base language model across scanned directories.
      */
-    fun findExistingModel(context: Context): File? {
+    fun findExistingModel(context: Context, preferredRole: ModelRole = ModelRole.CHAT): File? {
         val installed = getInstalledModels(context)
+        val roleCandidates = installed.filter { getModelRole(it.name) == preferredRole && !isVisionProjector(it.name) }
 
-        // 1. SmolLM2-360M (fastest, most reliable)
-        installed.firstOrNull { it.name.equals(DEFAULT_SMOLLM_360M, ignoreCase = true) }?.let { return it }
+        // 1. Check recommended models first
+        for (name in RECOMMENDED_MODELS) {
+            roleCandidates.firstOrNull { it.name.equals(name, ignoreCase = true) }?.let { return it }
+        }
 
-        // 2. Gemma-2-2B GGUF
-        installed.firstOrNull { it.name.equals(DEFAULT_GEMMA_2_2B_GGUF, ignoreCase = true) }?.let { return it }
-
-        // 3. Qwen2.5-0.5B
-        installed.firstOrNull { it.name.equals(DEFAULT_QWEN_05B, ignoreCase = true) }?.let { return it }
-
-        // 4. Any other standalone base GGUF (excluding mmproj vision projectors!)
-        installed.firstOrNull { it.name.endsWith(".gguf", ignoreCase = true) && !isVisionProjector(it.name) }?.let { return it }
-
-        // 5. MediaPipe .bin or .task bundles
-        return installed.firstOrNull { !isVisionProjector(it.name) }
+        return roleCandidates.firstOrNull() ?: installed.firstOrNull { isChatModel(it.name) }
     }
 
     /**
      * Finds any installed multimodal vision projector file (e.g. mmproj-GLM-OCR-Q8_0.gguf).
      */
     fun findVisionProjector(context: Context): File? {
-        return context.filesDir.listFiles()?.firstOrNull {
-            isVisionProjector(it.name) && it.length() > 10_000_000L
-        } ?: run {
-            try {
-                File("/data/local/tmp").listFiles()?.firstOrNull {
-                    isVisionProjector(it.name) && it.length() > 10_000_000L
-                }
-            } catch (_: Exception) {
-                null
-            }
-        }
+        return getInstalledModels(context).firstOrNull { isVisionProjector(it.name) }
     }
 
     /**

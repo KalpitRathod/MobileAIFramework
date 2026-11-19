@@ -342,6 +342,10 @@ class MainActivity : AppCompatActivity() {
                 sendChatMessage()
             }
         }
+
+        binding.btnSelectChatModelPrompt.setOnClickListener {
+            showModelSelectionDialog(ModelRole.CHAT)
+        }
     }
 
     private fun showAttachmentBanner(text: String) {
@@ -366,8 +370,7 @@ class MainActivity : AppCompatActivity() {
                 (!aiEngine.isInitialized && hasActiveCloudKey && !isMultimodalVisual)
 
         if (!useCloud && !aiEngine.isInitialized && !isMultimodalVisual) {
-            Toast.makeText(this, "Please select an offline model or configure Cloud AI Hub.", Toast.LENGTH_SHORT).show()
-            showModelSelectionDialog()
+            showModelRequiredDialog(ModelRole.CHAT)
             return
         }
 
@@ -694,8 +697,25 @@ class MainActivity : AppCompatActivity() {
             imagePickerLauncher.launch("image/*")
         }
 
+        binding.tvLensModelBadge.setOnClickListener {
+            showModelSelectionDialog(ModelRole.VISUAL)
+        }
+
+        binding.tvAudioModelStatus.setOnClickListener {
+            showModelSelectionDialog(ModelRole.AUDIO)
+        }
+
         // Lens OCR Bottom Sheet Actions
         binding.btnVisualAskChat.setOnClickListener {
+            val cloudStore = aiEngine.mobileAI.cloudApiKeyStore
+            val hasActiveCloudKey = cloudStore.getApiKey(cloudStore.getActiveProvider()).isNotBlank()
+            val useCloud = cloudStore.isCloudPreferred() || (!aiEngine.isInitialized && hasActiveCloudKey)
+
+            if (!useCloud && !aiEngine.isInitialized) {
+                showModelRequiredDialog(ModelRole.VISUAL)
+                return@setOnClickListener
+            }
+
             val ocrText = binding.tvVisualOcrResult.text.toString()
             val query = if (ocrText.isNotBlank() && !ocrText.startsWith("No text")) {
                 "Explain and summarize this detected text:\n$ocrText"
@@ -807,7 +827,12 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onError(error: String) {
-                    Toast.makeText(this@MainActivity, "STT error: $error", Toast.LENGTH_SHORT).show()
+                    val hasWhisper = aiEngine.isInitialized && ModelFileManager.isAudioModel(aiEngine.currentModelName)
+                    if (!hasWhisper) {
+                        showModelRequiredDialog(ModelRole.AUDIO)
+                    } else {
+                        Toast.makeText(this@MainActivity, "STT: $error", Toast.LENGTH_SHORT).show()
+                    }
                 }
             })
         }
@@ -994,6 +1019,10 @@ class MainActivity : AppCompatActivity() {
             reindexKnowledgeVectors()
         }
 
+        binding.tvKnowledgeCountBadge.setOnClickListener {
+            showModelSelectionDialog(ModelRole.EMBEDDING)
+        }
+
         // Add Knowledge FAB
         binding.fabNewKnowledge.setOnClickListener {
             showNewKnowledgeDialog()
@@ -1003,10 +1032,21 @@ class MainActivity : AppCompatActivity() {
     private fun loadKnowledgeEntries(query: String? = binding.etKnowledgeSearch.text?.toString()) {
         val entries = dbHelper.getAllKnowledge(query = query, category = currentKnowledgeCategory)
         knowledgeAdapter.updateList(entries)
-        binding.tvKnowledgeCountBadge.text = "${entries.size} Knowledge Docs (SQLite Vector Store)"
+        val modelTag = if (aiEngine.isInitialized) {
+            val role = ModelFileManager.getModelRole(aiEngine.currentModelName)
+            "${role.icon} ${aiEngine.currentModelName.substringBefore(".gguf").take(14)}"
+        } else {
+            "No Model (Tap to Select)"
+        }
+        binding.tvKnowledgeCountBadge.text = "${entries.size} Docs • Vector Store: $modelTag"
     }
 
     private fun reindexKnowledgeVectors() {
+        if (!aiEngine.isInitialized) {
+            showModelRequiredDialog(ModelRole.EMBEDDING)
+            return
+        }
+
         lifecycleScope.launch {
             val allEntries = dbHelper.getAllKnowledge()
             val pairs = allEntries.map { it.id.toString() to "${it.title}. ${it.summary}. ${it.content}" }
@@ -1267,13 +1307,24 @@ class MainActivity : AppCompatActivity() {
             val model = store.getModelName(provider)
             binding.tvModelSubtitle.text = "• ${model.take(12)}"
             updateEngineStatus("Cloud Active", R.color.google_blue)
+            binding.layoutChatModelPrompt.visibility = View.GONE
         } else if (aiEngine.isInitialized) {
             val shortName = aiEngine.currentModelName.substringBefore("-it").substringBefore("-Instruct").substringBefore(".gguf").take(14)
-            binding.tvModelSubtitle.text = "• $shortName"
+            val role = ModelFileManager.getModelRole(aiEngine.currentModelName)
+            binding.tvModelSubtitle.text = "• ${role.icon} $shortName"
             updateEngineStatus("Local Ready", R.color.status_ready)
+
+            // Update Tab status badges
+            binding.layoutChatModelPrompt.visibility = if (role == ModelRole.CHAT || role == ModelRole.VISUAL) View.GONE else View.VISIBLE
+            binding.tvLensModelBadge.text = "${role.icon} $shortName"
+            binding.tvAudioModelStatus.text = if (role == ModelRole.AUDIO) "🎙️ Active: $shortName" else "🎙️ Tap to load Whisper GGUF"
+            loadKnowledgeEntries()
         } else {
             binding.tvModelSubtitle.text = "• Select Model"
             updateEngineStatus("Select Model", R.color.status_loading)
+            binding.layoutChatModelPrompt.visibility = View.VISIBLE
+            binding.tvLensModelBadge.text = "👁️ ML Kit OCR"
+            binding.tvAudioModelStatus.text = "🎙️ Tap to select Whisper GGUF"
         }
     }
 
@@ -1311,6 +1362,7 @@ class MainActivity : AppCompatActivity() {
         val sizeMb = projectorFile.length() / (1024 * 1024)
         updateEngineStatus("Projector Only", R.color.status_loading)
         binding.tvModelSubtitle.text = "• Attach Model"
+        binding.tvLensModelBadge.text = "👁️ mmproj Attached"
         Toast.makeText(
             this,
             "👁️ Vision projector '${projectorFile.name}' (${sizeMb}MB) active. Please select a base language model.",
@@ -1323,11 +1375,14 @@ class MainActivity : AppCompatActivity() {
         val isGguf = modelFile.name.lowercase().endsWith(".gguf")
 
         val budget = aiEngine.evaluateMemoryBudget(modelFile)
+        val role = ModelFileManager.getModelRole(modelFile.name)
         val engineLabel = when {
             !isGguf -> "MediaPipe GPU"
             modelFile.name.contains("gemma", ignoreCase = true) -> "Gemma-2 GGUF"
             modelFile.name.contains("smollm", ignoreCase = true) -> "SmolLM2 GGUF"
             modelFile.name.contains("qwen", ignoreCase = true) -> "Qwen GGUF"
+            modelFile.name.contains("whisper", ignoreCase = true) -> "Whisper ASR"
+            modelFile.name.contains("minilm", ignoreCase = true) || modelFile.name.contains("bge", ignoreCase = true) -> "Vector Embedding"
             else -> "llama.cpp GGUF"
         }
 
@@ -1348,8 +1403,9 @@ class MainActivity : AppCompatActivity() {
                 val sizeMb = modelFile.length() / (1024 * 1024)
                 val profile = aiEngine.getHardwareProfile()
                 val threadInfo = "${profile.cpuTopology.optimalInferenceThreads}T Big-Core"
-                binding.tvModelSubtitle.text = "$engineLabel • ${sizeMb}MB • $threadInfo"
+                binding.tvModelSubtitle.text = "${role.icon} $engineLabel • ${sizeMb}MB • $threadInfo"
                 updateEngineStatus("Ready", R.color.status_ready)
+                updateModelSubtitle()
                 Toast.makeText(this@MainActivity, "$engineDesc ready for inference!", Toast.LENGTH_SHORT).show()
             }.onFailure { error ->
                 updateEngineStatus("Init Failed", R.color.status_error)
@@ -1358,7 +1414,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showModelSelectionDialog() {
+    private fun showModelSelectionDialog(initialFilterRole: ModelRole? = null) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_model_select)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -1368,42 +1424,71 @@ class MainActivity : AppCompatActivity() {
         val btnImport = dialog.findViewById<Button>(R.id.btnImportNewModel)
         val btnScanTmp = dialog.findViewById<Button>(R.id.btnScanTmpDialog)
 
+        val chipAll = dialog.findViewById<TextView>(R.id.chipModelAll)
+        val chipChat = dialog.findViewById<TextView>(R.id.chipModelChat)
+        val chipVisual = dialog.findViewById<TextView>(R.id.chipModelVisual)
+        val chipAudio = dialog.findViewById<TextView>(R.id.chipModelAudio)
+        val chipDb = dialog.findViewById<TextView>(R.id.chipModelDb)
+
+        var activeFilter: ModelRole? = initialFilterRole
+
         val installedModels = ModelFileManager.getInstalledModels(this)
 
-        if (installedModels.isEmpty()) {
-            val tvEmpty = TextView(this).apply {
-                text = "No models currently in app private storage.\nTap '+ Import' below or select from storage."
-                setTextColor(ContextCompat.getColor(context, R.color.text_muted))
-                textSize = 12f
-                setPadding(0, 16, 0, 16)
-            }
-            layoutList.addView(tvEmpty)
-        } else {
-            val (projectors, baseModels) = installedModels.partition { ModelFileManager.isVisionProjector(it.name) }
+        fun renderModels() {
+            layoutList.removeAllViews()
 
-            // Section 1: Base Language Models
-            if (baseModels.isNotEmpty()) {
-                val tvSectionLlms = TextView(this).apply {
-                    text = "ACTIVE LANGUAGE MODELS"
-                    setTextColor(ContextCompat.getColor(context, R.color.royal_gold))
+            val filtered = if (activeFilter == null) {
+                installedModels
+            } else {
+                installedModels.filter { ModelFileManager.getModelRole(it.name) == activeFilter }
+            }
+
+            if (filtered.isEmpty()) {
+                val tvEmpty = TextView(this).apply {
+                    val filterName = activeFilter?.categoryName ?: "matching"
+                    text = "No $filterName models found.\nTap '+ Select File' or push via ADB to /data/local/tmp."
+                    setTextColor(ContextCompat.getColor(context, R.color.text_muted))
+                    textSize = 12f
+                    setPadding(16, 24, 16, 24)
+                    gravity = android.view.Gravity.CENTER
+                }
+                layoutList.addView(tvEmpty)
+                return
+            }
+
+            val grouped = filtered.groupBy { ModelFileManager.getModelRole(it.name) }
+
+            for ((role, models) in grouped) {
+                val (roleColorRes, rolePillRes) = when (role) {
+                    ModelRole.CHAT -> Pair(R.color.google_blue, R.drawable.bg_tab_pill_blue)
+                    ModelRole.VISUAL -> Pair(R.color.google_red, R.drawable.bg_tab_pill_red)
+                    ModelRole.AUDIO -> Pair(R.color.google_green, R.drawable.bg_tab_pill_green)
+                    ModelRole.EMBEDDING -> Pair(R.color.google_yellow, R.drawable.bg_tab_pill_yellow)
+                }
+
+                // Section Header
+                val tvSection = TextView(this).apply {
+                    text = "${role.icon} ${role.categoryName.uppercase()}"
+                    setTextColor(ContextCompat.getColor(context, roleColorRes))
                     textSize = 11f
                     setTypeface(null, android.graphics.Typeface.BOLD)
-                    setPadding(4, 8, 4, 8)
+                    setPadding(4, 12, 4, 6)
                 }
-                layoutList.addView(tvSectionLlms)
+                layoutList.addView(tvSection)
 
-                for (file in baseModels) {
+                for (file in models) {
                     val sizeMb = file.length() / (1024 * 1024)
                     val isSelected = selectedModelFile?.absolutePath == file.absolutePath
+                    val isProjector = ModelFileManager.isVisionProjector(file.name)
 
                     val itemLayout = LinearLayout(this).apply {
                         orientation = LinearLayout.HORIZONTAL
                         layoutParams = LinearLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT
-                        ).apply { setMargins(0, 6, 0, 6) }
+                        ).apply { setMargins(0, 4, 0, 4) }
                         setBackgroundResource(if (isSelected) R.drawable.bg_card_boxy_gold else R.drawable.bg_card_boxy)
-                        setPadding(16, 14, 16, 14)
+                        setPadding(16, 12, 16, 12)
                         isClickable = true
                         isFocusable = true
                     }
@@ -1415,15 +1500,22 @@ class MainActivity : AppCompatActivity() {
 
                     val tvName = TextView(this).apply {
                         text = file.name
-                        setTextColor(ContextCompat.getColor(context, if (isSelected) R.color.royal_gold else R.color.text_primary))
+                        setTextColor(ContextCompat.getColor(context, if (isSelected) roleColorRes else R.color.text_primary))
                         textSize = 13f
                         setTypeface(null, android.graphics.Typeface.BOLD)
                     }
 
                     val tvInfo = TextView(this).apply {
-                        val budgetNote = if (!aiEngine.evaluateMemoryBudget(file).isSafeToLoad) "⚠️ Low RAM" else "✓ RAM OK"
-                        text = "${sizeMb}MB • ${if (file.name.endsWith(".gguf")) "llama.cpp CPU" else "MediaPipe"} • $budgetNote"
-                        setTextColor(ContextCompat.getColor(context, R.color.text_muted))
+                        val roleTag = when {
+                            isProjector -> "Vision Projector mmproj (Adapter)"
+                            role == ModelRole.AUDIO -> "Whisper ASR Speech-to-Text"
+                            role == ModelRole.EMBEDDING -> "Dense Vector Embedding Model"
+                            file.name.contains("vlm", ignoreCase = true) || file.name.contains("ocr", ignoreCase = true) -> "Vision-Language Base Model"
+                            else -> "llama.cpp NEON LLM"
+                        }
+                        val budgetNote = if (!aiEngine.evaluateMemoryBudget(file).isSafeToLoad) "⚠️ High RAM" else "✓ RAM OK"
+                        text = "${sizeMb}MB • $roleTag • $budgetNote"
+                        setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
                         textSize = 11f
                     }
 
@@ -1434,10 +1526,10 @@ class MainActivity : AppCompatActivity() {
                     if (isSelected) {
                         val tvActive = TextView(this).apply {
                             text = "ACTIVE"
-                            setTextColor(ContextCompat.getColor(context, R.color.royal_gold))
+                            setTextColor(ContextCompat.getColor(context, roleColorRes))
                             textSize = 10f
                             setTypeface(null, android.graphics.Typeface.BOLD)
-                            setBackgroundResource(R.drawable.bg_tag_boxy)
+                            setBackgroundResource(rolePillRes)
                             setPadding(8, 4, 8, 4)
                         }
                         itemLayout.addView(tvActive)
@@ -1445,95 +1537,95 @@ class MainActivity : AppCompatActivity() {
 
                     itemLayout.setOnClickListener {
                         dialog.dismiss()
-                        initializeEngineWithModel(file)
-                    }
-
-                    layoutList.addView(itemLayout)
-                }
-            }
-
-            // Section 2: Multimodal Vision & OCR Projectors
-            if (projectors.isNotEmpty()) {
-                val tvSectionProj = TextView(this).apply {
-                    text = "ATTACHED VISION & OCR PROJECTORS"
-                    setTextColor(ContextCompat.getColor(context, R.color.royal_blue_light))
-                    textSize = 11f
-                    setTypeface(null, android.graphics.Typeface.BOLD)
-                    setPadding(4, 16, 4, 8)
-                }
-                layoutList.addView(tvSectionProj)
-
-                for (file in projectors) {
-                    val sizeMb = file.length() / (1024 * 1024)
-
-                    val itemLayout = LinearLayout(this).apply {
-                        orientation = LinearLayout.HORIZONTAL
-                        layoutParams = LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        ).apply { setMargins(0, 6, 0, 6) }
-                        setBackgroundResource(R.drawable.bg_card_boxy)
-                        setPadding(16, 14, 16, 14)
-                        isClickable = true
-                        isFocusable = true
-                    }
-
-                    val infoLayout = LinearLayout(this).apply {
-                        orientation = LinearLayout.VERTICAL
-                        layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-                    }
-
-                    val tvName = TextView(this).apply {
-                        text = file.name
-                        setTextColor(ContextCompat.getColor(context, R.color.text_primary))
-                        textSize = 13f
-                        setTypeface(null, android.graphics.Typeface.BOLD)
-                    }
-
-                    val tvInfo = TextView(this).apply {
-                        text = "${sizeMb}MB • Multimodal Vision / OCR Adapter (Attached ✓)"
-                        setTextColor(ContextCompat.getColor(context, R.color.royal_blue_light))
-                        textSize = 11f
-                    }
-
-                    infoLayout.addView(tvName)
-                    infoLayout.addView(tvInfo)
-                    itemLayout.addView(infoLayout)
-
-                    val tvProj = TextView(this).apply {
-                        text = "ATTACHED"
-                        setTextColor(ContextCompat.getColor(context, R.color.status_ready))
-                        textSize = 9f
-                        setTypeface(null, android.graphics.Typeface.BOLD)
-                        setBackgroundResource(R.drawable.bg_tag_boxy)
-                        setPadding(6, 3, 6, 3)
-                    }
-                    itemLayout.addView(tvProj)
-
-                    itemLayout.setOnClickListener {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "👁️ '${file.name}' is attached as your active vision/OCR projector adapter.",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        if (isProjector) {
+                            Toast.makeText(this@MainActivity, "👁️ '${file.name}' attached as active Vision Projector adapter.", Toast.LENGTH_LONG).show()
+                            binding.tvLensModelBadge.text = "👁️ mmproj Attached"
+                        } else {
+                            initializeEngineWithModel(file)
+                        }
                     }
 
                     layoutList.addView(itemLayout)
                 }
             }
         }
+
+        fun updateChips() {
+            val chips = listOf(
+                Pair(chipAll, null),
+                Pair(chipChat, ModelRole.CHAT),
+                Pair(chipVisual, ModelRole.VISUAL),
+                Pair(chipAudio, ModelRole.AUDIO),
+                Pair(chipDb, ModelRole.EMBEDDING)
+            )
+            for ((chip, role) in chips) {
+                if (chip == null) continue
+                val isSelected = (activeFilter == role)
+                if (isSelected) {
+                    val (bgRes, colorRes) = when (role) {
+                        ModelRole.CHAT, null -> Pair(R.drawable.bg_tab_pill_blue, R.color.google_blue)
+                        ModelRole.VISUAL -> Pair(R.drawable.bg_tab_pill_red, R.color.google_red)
+                        ModelRole.AUDIO -> Pair(R.drawable.bg_tab_pill_green, R.color.google_green)
+                        ModelRole.EMBEDDING -> Pair(R.drawable.bg_tab_pill_yellow, R.color.google_yellow)
+                    }
+                    chip.setBackgroundResource(bgRes)
+                    chip.setTextColor(ContextCompat.getColor(this, colorRes))
+                } else {
+                    chip.setBackgroundResource(R.drawable.bg_pill_outlined)
+                    chip.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+                }
+            }
+            renderModels()
+        }
+
+        chipAll?.setOnClickListener { activeFilter = null; updateChips() }
+        chipChat?.setOnClickListener { activeFilter = ModelRole.CHAT; updateChips() }
+        chipVisual?.setOnClickListener { activeFilter = ModelRole.VISUAL; updateChips() }
+        chipAudio?.setOnClickListener { activeFilter = ModelRole.AUDIO; updateChips() }
+        chipDb?.setOnClickListener { activeFilter = ModelRole.EMBEDDING; updateChips() }
 
         btnScanTmp?.setOnClickListener {
             dialog.dismiss()
             scanLocalTmp()
         }
 
-        btnImport.setOnClickListener {
+        btnImport?.setOnClickListener {
             dialog.dismiss()
             modelPickerLauncher.launch("*/*")
         }
 
+        updateChips()
         dialog.show()
+    }
+
+    private fun showModelRequiredDialog(targetRole: ModelRole) {
+        val (roleTitle, roleMsg) = when (targetRole) {
+            ModelRole.CHAT -> Pair(
+                "💬 Chat Model Needed",
+                "Offline chat and reasoning requires an on-device language model (e.g. SmolLM2, Qwen2.5, Gemma-2).\n\nWould you like to select a chat model?"
+            )
+            ModelRole.VISUAL -> Pair(
+                "👁️ Vision Model Needed",
+                "Visual AI reasoning requires a Vision-Language Model (SmolVLM, GLM-OCR) or Chat model to analyze images.\n\nWould you like to select a model?"
+            )
+            ModelRole.AUDIO -> Pair(
+                "🎙️ Audio Model Needed",
+                "Offline speech-to-text requires a Whisper ASR model (e.g. whisper-base.en-Q8_0.gguf).\n\nWould you like to select a Whisper model?"
+            )
+            ModelRole.EMBEDDING -> Pair(
+                "🗄️ Embedding Model Needed",
+                "Vector indexing and semantic search requires an Embedding model (all-minilm-l6-v2, bge-small) or active language model to compute embeddings.\n\nWould you like to select an embedding model?"
+            )
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(roleTitle)
+            .setMessage(roleMsg)
+            .setPositiveButton("Select Model") { _, _ ->
+                showModelSelectionDialog(targetRole)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showModelMissingState() {
