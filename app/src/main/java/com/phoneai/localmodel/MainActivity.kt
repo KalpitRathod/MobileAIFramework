@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
     private var currentKnowledgeCategory: String = "All"
     private var selectedModelFile: File? = null
 
-    enum class Tab { CHAT, SENSORY, AGENT, KNOWLEDGE, HARDWARE }
+    enum class Tab { CHAT, VISUAL, AUDIO, DATABASE, AGENT, HARDWARE }
 
     // File picker contract for importing GGUF models
     private val modelPickerLauncher = registerForActivityResult(
@@ -168,14 +168,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // NAVIGATION & TAB SWITCHING
+    // NAVIGATION & TAB SWITCHING (Google 4 Tabs)
     // ==========================================
     private fun setupNavigation() {
         binding.tabBuddy.setOnClickListener { switchTab(Tab.CHAT) }
-        binding.tabSensory.setOnClickListener { switchTab(Tab.SENSORY) }
-        binding.tabAgent.setOnClickListener { switchTab(Tab.AGENT) }
-        binding.tabKnowledge.setOnClickListener { switchTab(Tab.KNOWLEDGE) }
-        binding.tabHardware.setOnClickListener { switchTab(Tab.HARDWARE) }
+        binding.tabVisual.setOnClickListener { switchTab(Tab.VISUAL) }
+        binding.tabAudio.setOnClickListener { switchTab(Tab.AUDIO) }
+        binding.tabKnowledge.setOnClickListener { switchTab(Tab.DATABASE) }
+        binding.btnHardwareInfo.setOnClickListener { switchTab(Tab.HARDWARE) }
         binding.btnCloudHub.setOnClickListener { showCloudHubDialog() }
     }
 
@@ -184,36 +184,53 @@ class MainActivity : AppCompatActivity() {
 
         // Toggle Views
         binding.viewBuddy.visibility = if (tab == Tab.CHAT) View.VISIBLE else View.GONE
-        binding.viewSensory.visibility = if (tab == Tab.SENSORY) View.VISIBLE else View.GONE
+        binding.viewVisual.visibility = if (tab == Tab.VISUAL) View.VISIBLE else View.GONE
+        binding.viewAudio.visibility = if (tab == Tab.AUDIO) View.VISIBLE else View.GONE
+        binding.viewKnowledge.visibility = if (tab == Tab.DATABASE) View.VISIBLE else View.GONE
         binding.viewAgent.visibility = if (tab == Tab.AGENT) View.VISIBLE else View.GONE
-        binding.viewKnowledge.visibility = if (tab == Tab.KNOWLEDGE) View.VISIBLE else View.GONE
         binding.viewHardware.visibility = if (tab == Tab.HARDWARE) View.VISIBLE else View.GONE
 
-        // Update Tab Colors
-        val gold = ContextCompat.getColor(this, R.color.royal_gold)
-        val muted = ContextCompat.getColor(this, R.color.text_muted)
+        // Google Brand Colors for Tabs and Selections
+        val blue = ContextCompat.getColor(this, R.color.google_blue)
+        val red = ContextCompat.getColor(this, R.color.google_red)
+        val green = ContextCompat.getColor(this, R.color.google_green)
+        val yellow = ContextCompat.getColor(this, R.color.google_yellow)
+        val muted = ContextCompat.getColor(this, R.color.text_secondary)
 
-        binding.ivTabBuddy.setColorFilter(if (tab == Tab.CHAT) gold else muted)
-        binding.tvTabBuddy.setTextColor(if (tab == Tab.CHAT) gold else muted)
+        // Tab 1: Chat (Google Blue)
+        val isChat = (tab == Tab.CHAT)
+        binding.ivTabBuddy.setColorFilter(if (isChat) blue else muted)
+        binding.tvTabBuddy.setTextColor(if (isChat) blue else muted)
+        binding.tvTabBuddy.paint.isFakeBoldText = isChat
+        binding.tabBuddyPill.setBackgroundResource(if (isChat) R.drawable.bg_tab_pill_blue else 0)
 
-        binding.ivTabSensory.setColorFilter(if (tab == Tab.SENSORY) gold else muted)
-        binding.tvTabSensory.setTextColor(if (tab == Tab.SENSORY) gold else muted)
+        // Tab 2: Visual (Google Red)
+        val isVisual = (tab == Tab.VISUAL)
+        binding.ivTabVisual.setColorFilter(if (isVisual) red else muted)
+        binding.tvTabVisual.setTextColor(if (isVisual) red else muted)
+        binding.tvTabVisual.paint.isFakeBoldText = isVisual
+        binding.tabVisualPill.setBackgroundResource(if (isVisual) R.drawable.bg_tab_pill_red else 0)
 
-        binding.ivTabAgent.setColorFilter(if (tab == Tab.AGENT) gold else muted)
-        binding.tvTabAgent.setTextColor(if (tab == Tab.AGENT) gold else muted)
+        // Tab 3: Audio (Google Green)
+        val isAudio = (tab == Tab.AUDIO)
+        binding.ivTabAudio.setColorFilter(if (isAudio) green else muted)
+        binding.tvTabAudio.setTextColor(if (isAudio) green else muted)
+        binding.tvTabAudio.paint.isFakeBoldText = isAudio
+        binding.tabAudioPill.setBackgroundResource(if (isAudio) R.drawable.bg_tab_pill_green else 0)
 
-        binding.ivTabKnowledge.setColorFilter(if (tab == Tab.KNOWLEDGE) gold else muted)
-        binding.tvTabKnowledge.setTextColor(if (tab == Tab.KNOWLEDGE) gold else muted)
-
-        binding.ivTabHardware.setColorFilter(if (tab == Tab.HARDWARE) gold else muted)
-        binding.tvTabHardware.setTextColor(if (tab == Tab.HARDWARE) gold else muted)
+        // Tab 4: Database (Google Yellow / Amber)
+        val isDb = (tab == Tab.DATABASE)
+        binding.ivTabKnowledge.setColorFilter(if (isDb) yellow else muted)
+        binding.tvTabKnowledge.setTextColor(if (isDb) yellow else muted)
+        binding.tvTabKnowledge.paint.isFakeBoldText = isDb
+        binding.tabKnowledgePill.setBackgroundResource(if (isDb) R.drawable.bg_tab_pill_yellow else 0)
 
         // Refresh data on tab switch
         when (tab) {
-            Tab.KNOWLEDGE -> loadKnowledgeEntries()
+            Tab.DATABASE -> loadKnowledgeEntries()
             Tab.HARDWARE -> refreshHardwareDiagnostics()
             Tab.AGENT -> updateAccessibilityStatus()
-            Tab.SENSORY -> checkPermissions()
+            Tab.VISUAL, Tab.AUDIO -> checkPermissions()
             Tab.CHAT -> { /* Keep chat as is */ }
         }
     }
@@ -262,7 +279,7 @@ class MainActivity : AppCompatActivity() {
                         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                             permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
                         } else {
-                            switchTab(Tab.SENSORY)
+                            switchTab(Tab.VISUAL)
                         }
                     } else {
                         imagePickerLauncher.launch("image/*")
@@ -276,11 +293,11 @@ class MainActivity : AppCompatActivity() {
                 permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
                 return@setOnClickListener
             }
-            switchTab(Tab.SENSORY)
+            switchTab(Tab.AUDIO)
         }
 
         binding.btnChatScreen.setOnClickListener {
-            switchTab(Tab.SENSORY)
+            switchTab(Tab.VISUAL)
         }
 
         binding.btnRemoveAttachment.setOnClickListener {
@@ -721,6 +738,20 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Start Screen Stream first to capture live frames.", Toast.LENGTH_SHORT).show()
             }
         }
+
+        binding.btnSensoryPickGallery.setOnClickListener {
+            imagePickerLauncher.launch("image/*")
+        }
+
+        binding.btnSensorySendAudioToBuddy.setOnClickListener {
+            val transcript = binding.tvSensoryAudioTranscript.text.toString()
+            if (transcript.isNotBlank() && transcript != "Live speech transcription appears here...") {
+                binding.etBuddyInput.setText(transcript)
+                switchTab(Tab.CHAT)
+            } else {
+                Toast.makeText(this, "Record speech first to get a transcript.", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     // ==========================================
@@ -842,7 +873,7 @@ class MainActivity : AppCompatActivity() {
                 for ((v, c) in catChips) {
                     if (c == cat) {
                         v.setBackgroundResource(R.drawable.bg_card_boxy_gold)
-                        v.setTextColor(ContextCompat.getColor(this, R.color.royal_gold))
+                        v.setTextColor(ContextCompat.getColor(this, R.color.google_yellow))
                     } else {
                         v.setBackgroundResource(R.drawable.bg_tag_boxy)
                         v.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
@@ -939,7 +970,7 @@ class MainActivity : AppCompatActivity() {
                 for ((view, c) in catViews) {
                     if (c == cat) {
                         view.setBackgroundResource(R.drawable.bg_card_boxy_gold)
-                        view.setTextColor(ContextCompat.getColor(this, R.color.royal_gold))
+                        view.setTextColor(ContextCompat.getColor(this, R.color.google_yellow))
                     } else {
                         view.setBackgroundResource(R.drawable.bg_tag_boxy)
                         view.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
@@ -1137,13 +1168,14 @@ class MainActivity : AppCompatActivity() {
         if (store.isCloudPreferred()) {
             val provider = store.getActiveProvider()
             val model = store.getModelName(provider)
-            binding.tvModelSubtitle.text = "$model • ${provider.displayName}"
-            updateEngineStatus("Cloud Active", R.color.royal_blue_light)
+            binding.tvModelSubtitle.text = "• ${model.take(12)}"
+            updateEngineStatus("Cloud Active", R.color.google_blue)
         } else if (aiEngine.isInitialized) {
-            binding.tvModelSubtitle.text = "${aiEngine.currentModelName} • Local Engine"
+            val shortName = aiEngine.currentModelName.substringBefore("-it").substringBefore("-Instruct").substringBefore(".gguf").take(14)
+            binding.tvModelSubtitle.text = "• $shortName"
             updateEngineStatus("Local Ready", R.color.status_ready)
         } else {
-            binding.tvModelSubtitle.text = "No Model Loaded"
+            binding.tvModelSubtitle.text = "• Select Model"
             updateEngineStatus("Select Model", R.color.status_loading)
         }
     }
@@ -1153,7 +1185,7 @@ class MainActivity : AppCompatActivity() {
     // ==========================================
     private fun setupModelControls() {
         binding.statusPill.setOnClickListener {
-            switchTab(Tab.HARDWARE)
+            showModelSelectionDialog()
         }
 
         binding.btnSwitchModel.setOnClickListener {

@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_card_boxy"
+    android:elevation="6dp"
     android:orientation="vertical"
     android:padding="20dp">
 
@@ -17,7 +18,8 @@
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_marginEnd="10dp"
-            android:src="@drawable/ic_cloud" />
+            android:src="@drawable/ic_cloud"
+            android:tint="@color/google_blue" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -29,7 +31,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Cloud AI Hub"
-                android:textColor="@color/royal_gold"
+                android:textColor="@color/google_blue"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -47,7 +49,8 @@
             android:layout_height="28dp"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="4dp"
-            android:src="@drawable/ic_close" />
+            android:src="@drawable/ic_close"
+            android:tint="@color/text_secondary" />
     </LinearLayout>
 
     <View
@@ -55,7 +58,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="12dp"
-        android:background="@color/royal_card_border" />
+        android:background="@color/google_border_light" />
 
     <!-- Mode Selector: Local vs Cloud -->
     <LinearLayout
@@ -92,7 +95,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Select AI Provider"
-        android:textColor="@color/royal_gold"
+        android:textColor="@color/google_blue"
         android:textSize="12sp"
         android:textStyle="bold" />
 
@@ -102,7 +105,7 @@
         android:layout_height="44dp"
         android:layout_marginTop="6dp"
         android:background="@drawable/bg_input_boxy"
-        android:popupBackground="@color/royal_surface" />
+        android:popupBackground="@color/google_surface" />
 
     <!-- API Key Input -->
     <TextView
@@ -184,10 +187,12 @@
             android:layout_height="42dp"
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_card_boxy"
+            android:background="@drawable/bg_tag_boxy"
             android:text="Test Ping"
-            android:textColor="@color/royal_gold"
-            android:textSize="12sp" />
+            android:textAllCaps="false"
+            android:textColor="@color/google_blue"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnSaveCloudConfig"
@@ -197,9 +202,10 @@
             android:layout_weight="1"
             android:background="@drawable/bg_button_royal"
             android:text="Save &amp; Activate"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </LinearLayout>
-

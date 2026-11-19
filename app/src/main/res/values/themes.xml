@@ -1,15 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Royal Boxy Theme for Mobile AI Studio -->
-    <style name="Theme.PhoneAI" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/royal_blue</item>
-        <item name="colorPrimaryInverse">@color/royal_blue_light</item>
-        <item name="colorSecondary">@color/royal_gold</item>
-        <item name="colorTertiary">@color/royal_purple</item>
+    <!-- Bright Google Material 3 Theme for Mobile AI Studio -->
+    <style name="Theme.PhoneAI" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/google_blue</item>
+        <item name="colorPrimaryInverse">@color/google_blue_light</item>
+        <item name="colorSecondary">@color/google_yellow</item>
+        <item name="colorTertiary">@color/google_green</item>
         
-        <item name="android:statusBarColor">@color/royal_bg</item>
-        <item name="android:navigationBarColor">@color/royal_surface</item>
-        <item name="android:windowBackground">@color/royal_bg</item>
+        <item name="android:statusBarColor">@color/google_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:navigationBarColor">@color/google_surface</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowBackground">@color/google_bg</item>
 
-        <item name="android:forceDarkAllowed" tools:targetApi="q">true</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 </resources>

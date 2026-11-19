@@ -4,68 +4,103 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/royal_bg">
+    android:background="@color/google_bg">
 
-    <!-- Top Action Bar (Royal Boxy) -->
+    <!-- Top Action Bar (Google Material 3 Bright Style) -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/royal_surface"
-        android:elevation="4dp"
+        android:layout_height="56dp"
+        android:background="@color/google_surface"
+        android:elevation="2dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="14dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="10dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="12dp"
         app:layout_constraintTop_toTopOf="parent">
 
+        <!-- Google Brand Dots & Title -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- 4 Google Colored Dots -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/ic_stop"
+                    android:backgroundTint="@color/google_blue" />
+
+                <View
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/ic_stop"
+                    android:backgroundTint="@color/google_red" />
+
+                <View
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/ic_stop"
+                    android:backgroundTint="@color/google_yellow" />
+
+                <View
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:background="@drawable/ic_stop"
+                    android:backgroundTint="@color/google_green" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Mobile AI Studio"
+                android:letterSpacing="-0.01"
+                android:text="Mobile AI"
                 android:textColor="@color/text_primary"
-                android:textSize="17sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvModelSubtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Offline Hardware-Optimized AI"
-                android:textColor="@color/royal_gold"
-                android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Status Chip -->
+        <!-- Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Header Model Selection Pill (Click to Switch Model) -->
         <LinearLayout
             android:id="@+id/statusPill"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="34dp"
             android:layout_marginEnd="6dp"
             android:background="@drawable/bg_tag_boxy"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="8dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="8dp"
-            android:paddingBottom="4dp">
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
 
+            <!-- Status Indicator Dot -->
             <View
                 android:id="@+id/statusIndicatorDot"
-                android:layout_width="7dp"
-                android:layout_height="7dp"
-                android:layout_marginEnd="5dp"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginEnd="6dp"
                 android:background="@drawable/ic_stop"
-                android:backgroundTint="@color/status_loading" />
+                android:backgroundTint="@color/google_green" />
 
+            <!-- Active Model Label / Status -->
             <TextView
                 android:id="@+id/tvEngineStatus"
                 android:layout_width="wrap_content"
@@ -74,28 +109,58 @@
                 android:textColor="@color/text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvModelSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:maxWidth="100dp"
+                android:text="• SmolLM2"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <!-- Dropdown indicator -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="▾"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Model Switcher Button -->
+        <!-- Hidden legacy switch model button to keep binding intact -->
         <ImageView
             android:id="@+id/btnSwitchModel"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Switch Model"
-            android:padding="7dp"
-            android:src="@drawable/ic_model" />
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
         <!-- Cloud AI Hub Button -->
         <ImageView
             android:id="@+id/btnCloudHub"
             android:layout_width="34dp"
             android:layout_height="34dp"
-            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Cloud AI Hub"
-            android:padding="7dp"
-            android:src="@drawable/ic_cloud" />
+            android:padding="6dp"
+            android:src="@drawable/ic_cloud"
+            app:tint="@color/google_blue" />
+
+        <!-- Hardware Diagnostics Dialog Button -->
+        <ImageView
+            android:id="@+id/btnHardwareInfo"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Hardware Diagnostics"
+            android:padding="6dp"
+            android:src="@drawable/ic_model"
+            app:tint="@color/text_secondary" />
 
     </LinearLayout>
 
@@ -103,7 +168,7 @@
         android:id="@+id/topBarDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/royal_card_border"
+        android:background="@color/google_border_light"
         app:layout_constraintTop_toBottomOf="@id/topBar" />
 
     <!-- Model Setup / Missing Banner -->
@@ -113,6 +178,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
         android:background="@drawable/bg_card_boxy"
+        android:elevation="2dp"
         android:orientation="vertical"
         android:padding="14dp"
         android:visibility="gone"
@@ -123,7 +189,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Local Model Weights Required"
-            android:textColor="@color/royal_gold"
+            android:textColor="@color/google_blue"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -142,8 +208,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:indeterminateTint="@color/royal_gold"
-            android:progressTint="@color/royal_gold"
+            android:indeterminateTint="@color/google_blue"
+            android:progressTint="@color/google_blue"
             android:visibility="gone" />
 
         <TextView
@@ -151,7 +217,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textColor="@color/royal_gold"
+            android:textColor="@color/google_blue"
             android:textSize="11sp"
             android:visibility="gone" />
 
@@ -182,7 +248,7 @@
                 android:background="@drawable/bg_card_boxy"
                 android:text="Select File"
                 android:textAllCaps="false"
-                android:textColor="@color/royal_gold"
+                android:textColor="@color/google_blue"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -202,7 +268,7 @@
                 android:background="@drawable/bg_button_gold"
                 android:text="⚡ Auto-Download SmolLM2"
                 android:textAllCaps="false"
-                android:textColor="@color/black"
+                android:textColor="@color/text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
@@ -212,10 +278,10 @@
                 android:layout_height="40dp"
                 android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                android:background="@drawable/bg_button_royal"
+                android:background="@drawable/bg_card_boxy"
                 android:text="🌐 Cloud AI Hub"
                 android:textAllCaps="false"
-                android:textColor="@color/royal_blue_light"
+                android:textColor="@color/google_blue"
                 android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
@@ -228,7 +294,9 @@
         app:layout_constraintBottom_toTopOf="@id/bottomBarDivider"
         app:layout_constraintTop_toBottomOf="@id/modelSetupCard">
 
-        <!-- 1. CHAT & STREAMING VIEW -->
+        <!-- ========================================== -->
+        <!-- 1. CHAT TAB (Google Blue)                 -->
+        <!-- ========================================== -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/viewBuddy"
             android:layout_width="match_parent"
@@ -240,7 +308,7 @@
                 android:id="@+id/suggestionsScroll"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/royal_surface"
+                android:background="@color/google_surface"
                 android:paddingStart="12dp"
                 android:paddingTop="8dp"
                 android:paddingEnd="12dp"
@@ -259,13 +327,14 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
                         android:text="Benchmark tok/s"
-                        android:textColor="@color/royal_gold"
-                        android:textSize="11sp" />
+                        android:textColor="@color/google_blue"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/chipPrompt2"
@@ -273,13 +342,13 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
                         android:text="Big-Core Pinning"
                         android:textColor="@color/text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/chipPrompt3"
@@ -287,13 +356,13 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
                         android:text="RAM &amp; KV-Cache"
                         android:textColor="@color/text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/chipPrompt4"
@@ -301,13 +370,13 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_tag_boxy"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
                         android:text="Phone Agent Guide"
                         android:textColor="@color/text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="12sp" />
                 </LinearLayout>
             </HorizontalScrollView>
 
@@ -326,13 +395,13 @@
                 android:id="@+id/layoutAttachmentPreview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/royal_card"
+                android:background="@color/google_blue_surface"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="12dp"
-                android:paddingTop="6dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="6dp"
+                android:paddingStart="14dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="8dp"
                 android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@id/layoutChatInput">
 
@@ -342,8 +411,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="📷 Multimodal Sensory Attached"
-                    android:textColor="@color/royal_gold"
-                    android:textSize="11sp" />
+                    android:textColor="@color/google_blue"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:id="@+id/btnRemoveAttachment"
@@ -352,54 +422,59 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Remove Attachment"
                     android:padding="4dp"
-                    android:src="@drawable/ic_close" />
+                    android:src="@drawable/ic_close"
+                    app:tint="@color/google_blue" />
             </LinearLayout>
 
-            <!-- Input Bar -->
+            <!-- Input Bar (Google Pill Style) -->
             <LinearLayout
                 android:id="@+id/layoutChatInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/royal_surface"
+                android:background="@color/google_surface"
+                android:elevation="4dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="6dp"
+                android:paddingStart="8dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="8dp"
                 app:layout_constraintBottom_toBottomOf="parent">
 
                 <ImageView
                     android:id="@+id/btnChatCamera"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Attach Camera Snapshot"
-                    android:padding="6dp"
+                    android:padding="7dp"
                     android:src="@drawable/ic_camera"
-                    app:tint="@color/royal_gold" />
+                    app:tint="@color/google_red" />
 
                 <ImageView
                     android:id="@+id/btnChatMic"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Voice Input"
-                    android:padding="6dp"
+                    android:padding="7dp"
                     android:src="@drawable/ic_mic"
-                    app:tint="@color/royal_blue_light" />
+                    app:tint="@color/google_green" />
 
                 <ImageView
                     android:id="@+id/btnChatScreen"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Screen Capture"
-                    android:padding="6dp"
+                    android:padding="7dp"
                     android:src="@drawable/ic_screen"
-                    app:tint="@color/status_ready" />
+                    app:tint="@color/google_blue" />
 
                 <EditText
                     android:id="@+id/etBuddyInput"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="42dp"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
@@ -408,73 +483,81 @@
                     android:imeOptions="actionSend"
                     android:inputType="textCapSentences|textMultiLine"
                     android:maxLines="3"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_muted"
                     android:textSize="13sp" />
 
                 <ImageView
                     android:id="@+id/btnClearChatHistory"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Clear Chat"
-                    android:padding="6dp"
-                    android:src="@drawable/ic_delete" />
+                    android:padding="7dp"
+                    android:src="@drawable/ic_delete"
+                    app:tint="@color/text_secondary" />
 
                 <ImageView
                     android:id="@+id/fabSendBuddy"
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="4dp"
                     android:background="@drawable/bg_button_royal"
                     android:clickable="true"
                     android:contentDescription="Send"
+                    android:elevation="2dp"
                     android:focusable="true"
-                    android:padding="9dp"
-                    android:src="@drawable/ic_send" />
+                    android:padding="10dp"
+                    android:src="@drawable/ic_send"
+                    app:tint="@color/white" />
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- 2. SENSORY VIEW (Live Camera, Mic Audio VU, Screen Recording Mirror) -->
+        <!-- ========================================== -->
+        <!-- 2. VISUAL TAB (Google Red)                -->
+        <!-- ========================================== -->
         <ScrollView
-            android:id="@+id/viewSensory"
+            android:id="@+id/viewVisual"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/royal_bg"
+            android:background="@color/google_bg"
             android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="14dp">
+                android:padding="16dp">
 
+                <!-- Header Title -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Real-time Sensory Feeds"
-                    android:textColor="@color/royal_gold"
-                    android:textSize="16sp"
+                    android:text="Visual Perception &amp; OCR"
+                    android:textColor="@color/google_red"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Live camera perception, audio waveform recording, and live screen capture."
+                    android:text="Real-time camera frames, instant on-device OCR, and live screen capture."
                     android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
 
-                <!-- Camera Card -->
+                <!-- 1. Camera Viewfinder Card -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="14dp"
                     android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
                     android:orientation="vertical"
-                    android:padding="10dp">
+                    android:padding="14dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -488,7 +571,7 @@
                             android:layout_weight="1"
                             android:text="📷 Live Camera Viewfinder"
                             android:textColor="@color/text_primary"
-                            android:textSize="13sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -496,147 +579,126 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_tag_boxy"
-                            android:paddingStart="6dp"
-                            android:paddingTop="2dp"
-                            android:paddingEnd="6dp"
-                            android:paddingBottom="2dp"
+                            android:paddingStart="8dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="8dp"
+                            android:paddingBottom="3dp"
                             android:text="Idle"
-                            android:textColor="@color/text_muted"
-                            android:textSize="10sp" />
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
                     </LinearLayout>
 
+                    <!-- Camera Viewfinder -->
                     <TextureView
                         android:id="@+id/cameraTextureView"
                         android:layout_width="match_parent"
-                        android:layout_height="180dp"
-                        android:layout_marginTop="8dp" />
+                        android:layout_height="200dp"
+                        android:layout_marginTop="10dp" />
 
+                    <!-- Camera Action Buttons -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="10dp"
                         android:orientation="horizontal">
 
                         <Button
                             android:id="@+id/btnToggleCameraFeed"
                             android:layout_width="0dp"
-                            android:layout_height="38dp"
+                            android:layout_height="40dp"
                             android:layout_marginEnd="4dp"
                             android:layout_weight="1"
                             android:background="@drawable/bg_button_royal"
+                            android:backgroundTint="@color/google_red"
                             android:text="Start Camera"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
+                            android:textAllCaps="false"
+                            android:textColor="@color/white"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
                         <Button
                             android:id="@+id/btnFlipCameraFacing"
                             android:layout_width="0dp"
-                            android:layout_height="38dp"
+                            android:layout_height="40dp"
                             android:layout_marginStart="4dp"
                             android:layout_marginEnd="4dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_card_boxy"
+                            android:background="@drawable/bg_tag_boxy"
                             android:text="Flip Lens"
-                            android:textColor="@color/royal_gold"
+                            android:textAllCaps="false"
+                            android:textColor="@color/text_primary"
                             android:textSize="11sp" />
 
                         <Button
                             android:id="@+id/btnSnapCameraToChat"
                             android:layout_width="0dp"
-                            android:layout_height="38dp"
+                            android:layout_height="40dp"
                             android:layout_marginStart="4dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_button_gold"
-                            android:text="Capture"
-                            android:textColor="@color/royal_bg"
-                            android:textSize="11sp" />
+                            android:background="@drawable/bg_button_royal"
+                            android:text="Capture to Chat"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Audio Card -->
+                <!-- 2. Gallery OCR Card -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
                     android:orientation="vertical"
-                    android:padding="10dp">
+                    android:padding="14dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🎙️ Live Audio Feed &amp; VU Waveform"
+                        android:text="🔍 Gallery Photo &amp; Document OCR"
                         android:textColor="@color/text_primary"
-                        android:textSize="13sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <ProgressBar
-                        android:id="@+id/pbAudioWaveform"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="10dp"
-                        android:layout_marginTop="8dp"
-                        android:max="100"
-                        android:progress="0"
-                        android:progressTint="@color/royal_blue_light" />
-
                     <TextView
-                        android:id="@+id/tvSensoryAudioTranscript"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_boxy"
-                        android:minHeight="38dp"
-                        android:padding="8dp"
-                        android:text="Live speech transcription appears here..."
+                        android:layout_marginTop="3dp"
+                        android:text="Pick an image from your gallery for instant offline text extraction and AI analysis."
                         android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
 
-                    <LinearLayout
+                    <Button
+                        android:id="@+id/btnSensoryPickGallery"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
-
-                        <Button
-                            android:id="@+id/btnSensoryRecordMic"
-                            android:layout_width="0dp"
-                            android:layout_height="38dp"
-                            android:layout_marginEnd="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_button_royal"
-                            android:text="Record Audio"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <Button
-                            android:id="@+id/btnSensorySpeechToText"
-                            android:layout_width="0dp"
-                            android:layout_height="38dp"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_card_boxy"
-                            android:text="Speech-To-Text"
-                            android:textColor="@color/royal_gold"
-                            android:textSize="11sp" />
-                    </LinearLayout>
+                        android:layout_height="42dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_tag_boxy"
+                        android:text="📁 Select Photo from Gallery"
+                        android:textAllCaps="false"
+                        android:textColor="@color/google_blue"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Screen Recording / Stream Card -->
+                <!-- 3. Screen Stream & Mirror Card -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
                     android:orientation="vertical"
-                    android:padding="10dp">
+                    android:padding="14dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📱 Live Screen Recording &amp; Updates"
+                        android:text="📱 Live Screen Recording"
                         android:textColor="@color/text_primary"
-                        android:textSize="13sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <ImageView
@@ -644,213 +706,226 @@
                         android:layout_width="match_parent"
                         android:layout_height="140dp"
                         android:layout_marginTop="8dp"
-                        android:background="@color/royal_surface"
+                        android:background="@color/google_surface_variant"
                         android:contentDescription="Screen Frame Preview"
                         android:scaleType="fitCenter" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="10dp"
                         android:orientation="horizontal">
 
                         <Button
                             android:id="@+id/btnSensoryScreenStream"
                             android:layout_width="0dp"
-                            android:layout_height="38dp"
-                            android:layout_marginEnd="6dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="4dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_button_royal"
+                            android:background="@drawable/bg_tag_boxy"
                             android:text="Start Screen Stream"
+                            android:textAllCaps="false"
                             android:textColor="@color/text_primary"
                             android:textSize="11sp" />
 
                         <Button
                             android:id="@+id/btnSensorySendScreenToBuddy"
                             android:layout_width="0dp"
-                            android:layout_height="38dp"
-                            android:layout_marginStart="6dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="4dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_button_gold"
-                            android:text="Send to Assistant"
-                            android:textColor="@color/royal_bg"
-                            android:textSize="11sp" />
+                            android:background="@drawable/bg_button_royal"
+                            android:text="Send Screen to Chat"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
 
             </LinearLayout>
         </ScrollView>
 
-        <!-- 3. AGENT VIEW (Autonomous Phone Controller & UI Automation) -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/viewAgent"
+        <!-- ========================================== -->
+        <!-- 3. AUDIO TAB (Google Green)               -->
+        <!-- ========================================== -->
+        <ScrollView
+            android:id="@+id/viewAudio"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/royal_bg"
+            android:background="@color/google_bg"
             android:visibility="gone">
 
-            <!-- Accessibility Status Header -->
             <LinearLayout
-                android:id="@+id/layoutAgentHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/royal_surface"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="12dp"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Autonomous Phone Controller"
-                        android:textColor="@color/royal_gold"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvAccessibilityStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Accessibility Service: CHECKING..."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp" />
-                </LinearLayout>
-
-                <Button
-                    android:id="@+id/btnEnableAccessibility"
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_button_royal"
-                    android:text="Enable"
-                    android:textColor="@color/text_primary"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <!-- Goal Input Card -->
-            <LinearLayout
-                android:id="@+id/layoutAgentGoalCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:background="@drawable/bg_card_boxy"
                 android:orientation="vertical"
-                android:padding="10dp"
-                app:layout_constraintTop_toBottomOf="@id/layoutAgentHeader">
+                android:padding="16dp">
+
+                <!-- Header Title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Voice &amp; Audio Processing"
+                    android:textColor="@color/google_green"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Task / Goal for Phone Agent"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/etAgentGoal"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_input_boxy"
-                    android:hint="e.g. Open Settings, toggle Airplane mode"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_muted"
+                    android:layout_marginTop="2dp"
+                    android:text="On-device speech recognition, acoustic waveform monitoring, and voice transcription."
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
+                <!-- 1. Live VU Waveform Card -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
+                    android:orientation="vertical"
+                    android:padding="14dp">
 
-                    <Button
-                        android:id="@+id/btnRunAgentGoal"
-                        android:layout_width="0dp"
-                        android:layout_height="38dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_button_gold"
-                        android:text="Execute Goal"
-                        android:textColor="@color/royal_bg"
-                        android:textSize="11sp" />
-
-                    <Button
-                        android:id="@+id/btnStopAgentGoal"
-                        android:layout_width="0dp"
-                        android:layout_height="38dp"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_button_royal"
-                        android:text="Stop Agent"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🎙️ Live Acoustic Level &amp; Waveform"
                         android:textColor="@color/text_primary"
-                        android:textSize="11sp" />
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <ProgressBar
+                        android:id="@+id/pbAudioWaveform"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="12dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressTint="@color/google_green" />
+
+                    <Button
+                        android:id="@+id/btnSensoryRecordMic"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_button_royal"
+                        android:backgroundTint="@color/google_green"
+                        android:text="Record Audio"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
+
+                <!-- 2. Speech-to-Text Transcription Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📝 Speech-to-Text Transcription"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvSensoryAudioTranscript"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_input_boxy"
+                        android:lineSpacingExtra="3dp"
+                        android:minHeight="50dp"
+                        android:padding="12dp"
+                        android:text="Live speech transcription appears here..."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnSensorySpeechToText"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_tag_boxy"
+                            android:text="Speech-to-Text"
+                            android:textAllCaps="false"
+                            android:textColor="@color/google_blue"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <Button
+                            android:id="@+id/btnSensorySendAudioToBuddy"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_button_gold"
+                            android:text="Send to Chat"
+                            android:textAllCaps="false"
+                            android:textColor="@color/text_primary"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
             </LinearLayout>
+        </ScrollView>
 
-            <!-- Live Action Log RecyclerView -->
-            <TextView
-                android:id="@+id/tvAgentLogTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
-                android:layout_marginTop="4dp"
-                android:text="AGENT EXECUTION STREAM"
-                android:textColor="@color/royal_gold"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvAgentSteps"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="6dp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvAgentLogTitle" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- 4. ON-DEVICE VECTOR KNOWLEDGE BASE VIEW -->
+        <!-- ========================================== -->
+        <!-- 4. DATABASE TAB (Google Yellow / Amber)   -->
+        <!-- ========================================== -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/viewKnowledge"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@color/google_bg"
             android:visibility="gone">
 
-            <!-- Search Bar & Re-index Header -->
+            <!-- Search Bar & Filters -->
             <LinearLayout
                 android:id="@+id/layoutKnowledgeHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/royal_surface"
+                android:background="@color/google_surface"
+                android:elevation="2dp"
                 android:orientation="vertical"
-                android:padding="10dp"
+                android:padding="12dp"
                 app:layout_constraintTop_toTopOf="parent">
 
+                <!-- Search Input Pill -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
+                    android:layout_height="44dp"
                     android:background="@drawable/bg_input_boxy"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp">
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
                     <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_marginEnd="8dp"
-                        android:src="@drawable/ic_search" />
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="10dp"
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/text_secondary" />
 
                     <EditText
                         android:id="@+id/etKnowledgeSearch"
@@ -867,7 +942,7 @@
                 <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="10dp"
                     android:scrollbars="none">
 
                     <LinearLayout
@@ -882,12 +957,12 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="6dp"
                             android:background="@drawable/bg_card_boxy_gold"
-                            android:paddingStart="10dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="3dp"
+                            android:paddingStart="12dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="5dp"
                             android:text="All"
-                            android:textColor="@color/royal_gold"
+                            android:textColor="@color/google_yellow"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -897,10 +972,10 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="6dp"
                             android:background="@drawable/bg_tag_boxy"
-                            android:paddingStart="10dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="3dp"
+                            android:paddingStart="12dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="5dp"
                             android:text="Hardware"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
@@ -911,10 +986,10 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="6dp"
                             android:background="@drawable/bg_tag_boxy"
-                            android:paddingStart="10dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="3dp"
+                            android:paddingStart="12dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="5dp"
                             android:text="Inference"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
@@ -925,10 +1000,10 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="6dp"
                             android:background="@drawable/bg_tag_boxy"
-                            android:paddingStart="10dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="3dp"
+                            android:paddingStart="12dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="5dp"
                             android:text="NPU"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
@@ -939,10 +1014,10 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="6dp"
                             android:background="@drawable/bg_tag_boxy"
-                            android:paddingStart="10dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="3dp"
+                            android:paddingStart="12dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="5dp"
                             android:text="Agents"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
@@ -953,10 +1028,10 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="6dp"
                             android:background="@drawable/bg_tag_boxy"
-                            android:paddingStart="10dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="3dp"
+                            android:paddingStart="12dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="5dp"
                             android:text="RAG"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
@@ -966,10 +1041,10 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_tag_boxy"
-                            android:paddingStart="10dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="3dp"
+                            android:paddingStart="12dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="5dp"
                             android:text="Cloud"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
@@ -980,7 +1055,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="8dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -990,8 +1065,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Embedded Vectors Active (SQLite + Cosine)"
-                        android:textColor="@color/royal_gold"
-                        android:textSize="10sp"
+                        android:textColor="@color/google_yellow"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -1001,13 +1076,14 @@
                         android:background="@drawable/bg_tag_boxy"
                         android:clickable="true"
                         android:focusable="true"
-                        android:paddingStart="8dp"
-                        android:paddingTop="2dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="2dp"
+                        android:paddingStart="10dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="3dp"
                         android:text="Re-index DB"
                         android:textColor="@color/text_primary"
-                        android:textSize="10sp" />
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -1017,7 +1093,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:clipToPadding="false"
-                android:paddingTop="6dp"
+                android:paddingTop="8dp"
                 android:paddingBottom="80dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/layoutKnowledgeHeader" />
@@ -1026,17 +1102,17 @@
             <LinearLayout
                 android:id="@+id/fabNewKnowledge"
                 android:layout_width="wrap_content"
-                android:layout_height="44dp"
+                android:layout_height="46dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_button_gold"
                 android:clickable="true"
-                android:elevation="6dp"
+                android:elevation="4dp"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
@@ -1045,39 +1121,188 @@
                     android:layout_height="16dp"
                     android:layout_marginEnd="6dp"
                     android:src="@drawable/ic_add"
-                    app:tint="@color/black" />
+                    app:tint="@color/text_primary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Add Vector Doc"
-                    android:textColor="@color/black"
-                    android:textSize="12sp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- 5. HARDWARE & NPU DIAGNOSTICS VIEW -->
+        <!-- ========================================== -->
+        <!-- 5. AGENT VIEW (Autonomous Phone Controller) -->
+        <!-- ========================================== -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/viewAgent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/google_bg"
+            android:visibility="gone">
+
+            <!-- Accessibility Status Header -->
+            <LinearLayout
+                android:id="@+id/layoutAgentHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/google_surface"
+                android:elevation="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Autonomous Phone Controller"
+                        android:textColor="@color/google_blue"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvAccessibilityStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Accessibility Service: CHECKING..."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnEnableAccessibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_button_royal"
+                    android:text="Enable"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Goal Input Card -->
+            <LinearLayout
+                android:id="@+id/layoutAgentGoalCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                android:background="@drawable/bg_card_boxy"
+                android:elevation="1dp"
+                android:orientation="vertical"
+                android:padding="12dp"
+                app:layout_constraintTop_toBottomOf="@id/layoutAgentHeader">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Task / Goal for Phone Agent"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etAgentGoal"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_boxy"
+                    android:hint="e.g. Open Settings, toggle Airplane mode"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnRunAgentGoal"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_button_royal"
+                        android:text="Execute Goal"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnStopAgentGoal"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_tag_boxy"
+                        android:text="Stop Agent"
+                        android:textAllCaps="false"
+                        android:textColor="@color/google_red"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvAgentLogTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="4dp"
+                android:text="AGENT EXECUTION STREAM"
+                android:textColor="@color/google_blue"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvAgentSteps"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvAgentLogTitle" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- ========================================== -->
+        <!-- 6. HARDWARE & NPU DIAGNOSTICS VIEW        -->
+        <!-- ========================================== -->
         <ScrollView
             android:id="@+id/viewHardware"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/royal_bg"
+            android:background="@color/google_bg"
             android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="14dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Hardware &amp; NPU Diagnostics"
-                    android:textColor="@color/royal_gold"
-                    android:textSize="16sp"
+                    android:textColor="@color/google_blue"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -1086,7 +1311,7 @@
                     android:layout_marginTop="2dp"
                     android:text="Deep SoC inspection, CPU big-core affinity, RAM headroom, and NPU acceleration."
                     android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
 
                 <!-- SoC & CPU Topology Card -->
                 <LinearLayout
@@ -1094,8 +1319,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="14dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -1111,7 +1337,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="SoC: MediaTek / Qualcomm / Tensor (ARMv8/v9)"
-                        android:textColor="@color/royal_gold"
+                        android:textColor="@color/google_blue"
                         android:textSize="12sp" />
 
                     <TextView
@@ -1119,7 +1345,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Clusters: 4 Little Cores (Efficiency) + 4 Big Cores (Performance)"
+                        android:text="Clusters: 4 Little Cores + 4 Big Cores"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
@@ -1128,8 +1354,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Big-Core Thread Affinity: ACTIVE (Prevents straggler stalls)"
-                        android:textColor="@color/status_ready"
+                        android:text="Big-Core Thread Affinity: ACTIVE"
+                        android:textColor="@color/google_green"
                         android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -1140,8 +1366,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="14dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -1165,8 +1392,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Recommended Context Size: 2048 tokens (400MB Headroom)"
-                        android:textColor="@color/royal_gold"
+                        android:text="Recommended Context Size: 2048 tokens"
+                        android:textColor="@color/google_blue"
                         android:textSize="12sp" />
 
                     <ProgressBar
@@ -1177,7 +1404,7 @@
                         android:layout_marginTop="8dp"
                         android:max="100"
                         android:progress="45"
-                        android:progressTint="@color/royal_blue_light" />
+                        android:progressTint="@color/google_blue" />
                 </LinearLayout>
 
                 <!-- NPU Acceleration Card -->
@@ -1186,8 +1413,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="14dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -1203,7 +1431,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="NPU: Probing hardware neural accelerators..."
-                        android:textColor="@color/royal_gold"
+                        android:textColor="@color/google_yellow"
                         android:textSize="12sp" />
 
                     <TextView
@@ -1211,7 +1439,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="INT8 GEMM • FP16 Matrix Multiplication • NNAPI 1.3"
+                        android:text="INT8 GEMM • FP16 Matrix Multiplication • NNAPI"
                         android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -1222,8 +1450,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:background="@drawable/bg_card_boxy"
+                    android:elevation="1dp"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="14dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -1238,8 +1467,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Thermal State: NORMAL (Clock throttling disabled)"
-                        android:textColor="@color/status_ready"
+                        android:text="Thermal State: NORMAL"
+                        android:textColor="@color/google_green"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
@@ -1248,7 +1477,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Optimal Threads: 4 Big Cores • Micro-duty duty: 100%"
+                        android:text="Optimal Threads: 4 Big Cores"
                         android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -1263,23 +1492,25 @@
                     <Button
                         android:id="@+id/btnRefreshDiagnostics"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
+                        android:layout_height="42dp"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_button_royal"
                         android:text="Refresh Stats"
-                        android:textColor="@color/text_primary"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
                         android:textSize="12sp" />
 
                     <Button
                         android:id="@+id/btnRunHardwareBenchmark"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
+                        android:layout_height="42dp"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_button_gold"
                         android:text="Run NPU Probe"
-                        android:textColor="@color/royal_bg"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -1293,20 +1524,21 @@
         android:id="@+id/bottomBarDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/royal_card_border"
+        android:background="@color/google_border_light"
         app:layout_constraintBottom_toTopOf="@id/bottomNav" />
 
-    <!-- Royal Boxy Bottom Navigation Bar (5 Primary Modes) -->
+    <!-- Google 4-Tab Bottom Navigation Bar (Chat, Visual, Audio, Database) -->
     <LinearLayout
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="@color/royal_surface"
+        android:layout_height="64dp"
+        android:background="@color/google_surface"
+        android:elevation="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- Tab 1: Chat -->
+        <!-- Tab 1: Chat (Google Blue) -->
         <LinearLayout
             android:id="@+id/tabBuddy"
             android:layout_width="0dp"
@@ -1318,27 +1550,35 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/ivTabBuddy"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_buddy"
-                app:tint="@color/royal_gold" />
+            <LinearLayout
+                android:id="@+id/tabBuddyPill"
+                android:layout_width="48dp"
+                android:layout_height="28dp"
+                android:background="@drawable/bg_tab_pill_blue"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/ivTabBuddy"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_buddy"
+                    app:tint="@color/google_blue" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvTabBuddy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:text="Chat"
-                android:textColor="@color/royal_gold"
+                android:textColor="@color/google_blue"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Tab 2: Sensory Feeds -->
+        <!-- Tab 2: Visual (Google Red) -->
         <LinearLayout
-            android:id="@+id/tabSensory"
+            android:id="@+id/tabVisual"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -1348,26 +1588,34 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/ivTabSensory"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_camera"
-                app:tint="@color/text_muted" />
+            <LinearLayout
+                android:id="@+id/tabVisualPill"
+                android:layout_width="48dp"
+                android:layout_height="28dp"
+                android:background="@null"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/ivTabVisual"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_camera"
+                    app:tint="@color/text_secondary" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvTabSensory"
+                android:id="@+id/tvTabVisual"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Sensory"
-                android:textColor="@color/text_muted"
+                android:layout_marginTop="3dp"
+                android:text="Visual"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Tab 3: Phone Agent -->
+        <!-- Tab 3: Audio (Google Green) -->
         <LinearLayout
-            android:id="@+id/tabAgent"
+            android:id="@+id/tabAudio"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -1377,24 +1625,32 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/ivTabAgent"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_agent"
-                app:tint="@color/text_muted" />
+            <LinearLayout
+                android:id="@+id/tabAudioPill"
+                android:layout_width="48dp"
+                android:layout_height="28dp"
+                android:background="@null"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/ivTabAudio"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_mic"
+                    app:tint="@color/text_secondary" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvTabAgent"
+                android:id="@+id/tvTabAudio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Agent"
-                android:textColor="@color/text_muted"
+                android:layout_marginTop="3dp"
+                android:text="Audio"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Tab 4: Vector Knowledge Base -->
+        <!-- Tab 4: Database (Google Yellow / Amber) -->
         <LinearLayout
             android:id="@+id/tabKnowledge"
             android:layout_width="0dp"
@@ -1406,51 +1662,49 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/ivTabKnowledge"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_search"
-                app:tint="@color/text_muted" />
+            <LinearLayout
+                android:id="@+id/tabKnowledgePill"
+                android:layout_width="48dp"
+                android:layout_height="28dp"
+                android:background="@null"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/ivTabKnowledge"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/text_secondary" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvTabKnowledge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Vector DB"
-                android:textColor="@color/text_muted"
+                android:layout_marginTop="3dp"
+                android:text="Database"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Tab 5: Hardware & NPU Diagnostics -->
+        <!-- Invisible legacy tabs to preserve any code bindings if needed -->
+        <LinearLayout
+            android:id="@+id/tabSensory"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/tabAgent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/tabHardware"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageView
-                android:id="@+id/ivTabHardware"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_model"
-                app:tint="@color/text_muted" />
-
-            <TextView
-                android:id="@+id/tvTabHardware"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Hardware"
-                android:textColor="@color/text_muted"
-                android:textSize="11sp" />
-        </LinearLayout>
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
     </LinearLayout>
 

@@ -37,7 +37,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="12dp"
-        android:background="@color/royal_card_border" />
+        android:background="@color/google_border_light" />
 
     <!-- Title input -->
     <EditText
@@ -211,7 +211,7 @@
             android:paddingStart="18dp"
             android:paddingEnd="18dp"
             android:text="Index &amp; Save"
-            android:textColor="@color/royal_bg"
+            android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>

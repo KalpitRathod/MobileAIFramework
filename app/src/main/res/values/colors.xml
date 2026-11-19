@@ -1,62 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Royal Theme Palette -->
-    <color name="royal_bg">#090D16</color>
-    <color name="royal_surface">#111726</color>
-    <color name="royal_card">#151E32</color>
-    <color name="royal_card_elevated">#1A253D</color>
-    <color name="royal_card_border">#233252</color>
-    <color name="royal_card_border_gold">#D4AF37</color>
-    
-    <!-- Royal Brand Accents -->
-    <color name="royal_blue">#1D4ED8</color>
-    <color name="royal_blue_light">#3B82F6</color>
-    <color name="royal_blue_dark">#172554</color>
-    <color name="royal_gold">#D4AF37</color>
-    <color name="royal_gold_light">#F5D77F</color>
-    <color name="royal_gold_dark">#997B1E</color>
-    <color name="royal_purple">#6D28D9</color>
-    
-    <!-- Text Colors -->
-    <color name="text_primary">#F8FAFC</color>
-    <color name="text_secondary">#94A3B8</color>
-    <color name="text_muted">#64748B</color>
-    <color name="text_gold">#E5B842</color>
-    
-    <!-- Status Colors -->
-    <color name="status_ready">#10B981</color>
-    <color name="status_ready_bg">#1A10B981</color>
-    <color name="status_loading">#E5B842</color>
-    <color name="status_loading_bg">#1AE5B842</color>
-    <color name="status_error">#EF4444</color>
-    <color name="status_error_bg">#1AEF4444</color>
-    
-    <!-- Chat Bubbles -->
-    <color name="bot_bubble">#131B2E</color>
-    <color name="bot_bubble_stroke">#233252</color>
-    <color name="user_bubble">#1E3A8A</color>
-    <color name="user_bubble_stroke">#2563EB</color>
+    <!-- Google Brand Colors -->
+    <color name="google_blue">#1A73E8</color>
+    <color name="google_blue_light">#4285F4</color>
+    <color name="google_blue_surface">#E8F0FE</color>
+    <color name="google_blue_border">#D2E3FC</color>
 
-    <!-- Legacy / Material Compat -->
-    <color name="primary">#1D4ED8</color>
-    <color name="primary_dark">#172554</color>
-    <color name="primary_light">#3B82F6</color>
-    <color name="accent">#D4AF37</color>
-    <color name="background">#090D16</color>
-    <color name="surface">#111726</color>
-    <color name="surface_card">#151E32</color>
-    <color name="surface_variant">#1A253D</color>
-    <color name="chip_bg">#151E32</color>
-    <color name="chip_stroke">#233252</color>
-    <color name="divider">#1B2742</color>
+    <color name="google_red">#D93025</color>
+    <color name="google_red_light">#EA4335</color>
+    <color name="google_red_surface">#FCE8E6</color>
+    <color name="google_red_border">#FAD2CF</color>
+
+    <color name="google_yellow">#F9AB00</color>
+    <color name="google_yellow_light">#FBBC05</color>
+    <color name="google_yellow_surface">#FEF7E0</color>
+    <color name="google_yellow_border">#FEEFC3</color>
+
+    <color name="google_green">#1E8E3E</color>
+    <color name="google_green_light">#34A853</color>
+    <color name="google_green_surface">#E6F4EA</color>
+    <color name="google_green_border">#CEEAD6</color>
+
+    <!-- Google Surfaces & Greys -->
+    <color name="google_bg">#F8F9FA</color>
+    <color name="google_surface">#FFFFFF</color>
+    <color name="google_surface_variant">#F1F3F4</color>
+    <color name="google_border">#DADCE0</color>
+    <color name="google_border_light">#E8EAED</color>
+
+    <!-- Text Colors (Google High Contrast) -->
+    <color name="text_primary">#202124</color>
+    <color name="text_secondary">#5F6368</color>
+    <color name="text_muted">#80868B</color>
+    <color name="text_gold">#F9AB00</color>
+
+    <!-- Status Colors -->
+    <color name="status_ready">#1E8E3E</color>
+    <color name="status_ready_bg">#E6F4EA</color>
+    <color name="status_loading">#F9AB00</color>
+    <color name="status_loading_bg">#FEF7E0</color>
+    <color name="status_error">#D93025</color>
+    <color name="status_error_bg">#FCE8E6</color>
+
+    <!-- Chat Bubbles -->
+    <color name="bot_bubble">#F1F3F4</color>
+    <color name="bot_bubble_stroke">#E8EAED</color>
+    <color name="user_bubble">#1A73E8</color>
+    <color name="user_bubble_stroke">#1765CC</color>
+
+    <!-- Compatibility Aliases (Light Theme Equivalents) -->
+    <color name="royal_bg">#F8F9FA</color>
+    <color name="royal_surface">#FFFFFF</color>
+    <color name="royal_card">#FFFFFF</color>
+    <color name="royal_card_elevated">#F1F3F4</color>
+    <color name="royal_card_border">#DADCE0</color>
+    <color name="royal_card_border_gold">#F9AB00</color>
+    
+    <color name="royal_blue">#1A73E8</color>
+    <color name="royal_blue_light">#4285F4</color>
+    <color name="royal_blue_dark">#174EA6</color>
+    <color name="royal_gold">#F9AB00</color>
+    <color name="royal_gold_light">#FBBC05</color>
+    <color name="royal_gold_dark">#B06000</color>
+    <color name="royal_purple">#8430CE</color>
+
+    <!-- Standard Material -->
+    <color name="primary">#1A73E8</color>
+    <color name="primary_dark">#174EA6</color>
+    <color name="primary_light">#4285F4</color>
+    <color name="accent">#1A73E8</color>
+    <color name="background">#F8F9FA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_variant">#F1F3F4</color>
+    <color name="chip_bg">#F1F3F4</color>
+    <color name="chip_stroke">#DADCE0</color>
+    <color name="divider">#E8EAED</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
 
-    <!-- Sensory & Cyber Accents -->
-    <color name="cyber_cyan">#00D2FF</color>
-    <color name="cyber_green">#00FF9D</color>
-    <color name="cyber_magenta">#FF007F</color>
-    <color name="recording_red">#EF4444</color>
-    <color name="agent_purple">#8B5CF6</color>
-    <color name="european_blue">#003399</color>
+    <!-- Secondary Accents -->
+    <color name="cyber_cyan">#1A73E8</color>
+    <color name="cyber_green">#1E8E3E</color>
+    <color name="cyber_magenta">#D93025</color>
+    <color name="recording_red">#D93025</color>
+    <color name="agent_purple">#8430CE</color>
+    <color name="european_blue">#1A73E8</color>
 </resources>
