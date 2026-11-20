@@ -38,10 +38,19 @@ object ModelFileManager {
     const val URL_QWEN_05B = "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"
 
     val RECOMMENDED_MODELS = listOf(
+        DEFAULT_GEMMA_2_2B_GGUF,
+        DEFAULT_SMOLLM_360M,
+        DEFAULT_QWEN_05B,
+        DEFAULT_SMOLLM_135M
+    )
+
+    val KNOWN_LOCAL_TMP_MODELS = listOf(
         DEFAULT_SMOLLM_360M,
         DEFAULT_GEMMA_2_2B_GGUF,
         DEFAULT_QWEN_05B,
-        DEFAULT_SMOLLM_135M
+        DEFAULT_SMOLLM_135M,
+        "smolvlm-500m-instruct-q4_k_m.gguf",
+        "mmproj-SmolVLM-500M-Instruct-f16.gguf"
     )
 
     /**
@@ -149,7 +158,10 @@ object ModelFileManager {
                 if (dir.exists() && dir.canRead()) {
                     dir.listFiles()?.forEach { file ->
                         val n = file.name.lowercase()
-                        if ((n.endsWith(".gguf") || n.endsWith(".bin") || n.endsWith(".task")) && file.length() > 5_000_000L) {
+                        if ((n.endsWith(".gguf") || n.endsWith(".bin") || n.endsWith(".task")) &&
+                            file.length() > 5_000_000L &&
+                            !isAudioModel(n) &&
+                            !isEmbeddingModel(n)) {
                             if (!list.containsKey(file.name)) {
                                 list[file.name] = file
                             }
@@ -157,6 +169,16 @@ object ModelFileManager {
                     }
                 }
             } catch (_: Exception) {}
+        }
+
+        // Fallback direct-path lookup for Android 14/15 SELinux where /data/local/tmp listFiles() is blocked
+        for (name in KNOWN_LOCAL_TMP_MODELS) {
+            if (!list.containsKey(name)) {
+                val f = File("/data/local/tmp", name)
+                if (f.exists() && f.canRead() && f.length() > 5_000_000L) {
+                    list[name] = f
+                }
+            }
         }
 
         return list.values.sortedWith(

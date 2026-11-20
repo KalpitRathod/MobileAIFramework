@@ -29,7 +29,8 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Close"
             android:padding="6dp"
-            android:src="@drawable/ic_close" />
+            android:src="@drawable/ic_close"
+            android:tint="@color/text_secondary" />
     </LinearLayout>
 
     <View
@@ -193,24 +194,41 @@
         android:gravity="end"
         android:orientation="horizontal">
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnCancelKnowledge"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="42dp"
             android:layout_marginEnd="8dp"
-            android:background="?attr/selectableItemBackground"
+            android:background="@drawable/bg_tag_boxy"
+            android:gravity="center"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingStart="16dp"
+            android:paddingTop="0dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="0dp"
+            android:stateListAnimator="@null"
             android:text="Cancel"
+            android:textAllCaps="false"
             android:textColor="@color/text_secondary"
-            android:textSize="13sp" />
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnSaveKnowledge"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="42dp"
             android:background="@drawable/bg_button_gold"
+            android:gravity="center"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             android:paddingStart="18dp"
+            android:paddingTop="0dp"
             android:paddingEnd="18dp"
+            android:paddingBottom="0dp"
+            android:stateListAnimator="@null"
             android:text="Index &amp; Save"
+            android:textAllCaps="false"
             android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:textStyle="bold" />

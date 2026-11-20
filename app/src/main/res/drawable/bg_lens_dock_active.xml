@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active mode capsule inside the Google Lens translucent dock -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#C40D0F12" />
+    <corners android:radius="28dp" />
+</shape>

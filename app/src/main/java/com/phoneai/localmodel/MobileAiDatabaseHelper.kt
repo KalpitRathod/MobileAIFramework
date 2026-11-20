@@ -26,7 +26,7 @@ class MobileAiDatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "mobile_ai_framework.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         private const val TABLE_CHAT = "chat_history"
         private const val TABLE_KNOWLEDGE = "knowledge_base"
@@ -72,60 +72,25 @@ class MobileAiDatabaseHelper(context: Context) :
     private fun seedDefaultKnowledge(db: SQLiteDatabase) {
         val defaultDocs = listOf(
             KnowledgeEntry(
-                title = "CPU Big-Core Thread Pinning",
-                category = "Hardware",
-                summary = "Prevent Little-core thread straggler barriers on ARM big.LITTLE architectures.",
-                content = "Standard thread pools spawn 8 threads across all 8 cores on mobile phones. The 6 Little efficiency cores (Cortex-A55 @ 1.8GHz) execute matrix blocks at half speed, causing Big cores (Cortex-X / A78 @ 2.8GHz) to idle waiting at barriers. Mobile AI Framework pins threads strictly to Big cores (N = N_Big) to achieve 2x sustained tok/s without overheating.",
-                timestamp = "Framework Core"
+                title = "Welcome to Mobile AI",
+                category = "Notes",
+                summary = "Your private, on-device AI workspace running offline on your smartphone.",
+                content = "Mobile AI runs high-speed AI models entirely on your phone. You can chat offline, extract text from photos with Google Lens, record and transcribe voice notes, and store your personal knowledge base securely on your device.",
+                timestamp = "Getting Started"
             ),
             KnowledgeEntry(
-                title = "Dynamic Thermal & Power Governor",
-                category = "Hardware",
-                summary = "Real-time thermal adaptation preventing kernel clock throttles.",
-                content = "Mobile SoCs experience thermal saturation within 90 seconds of GEMM matrix execution. When Android OS reports THERMAL_STATUS_MODERATE or SEVERE, Mobile AI dynamically drops thread count from 4 to 2 and introduces adaptive micro-duty cycles, preserving stable 30+ tok/s without dropping kernel clocks by 60%.",
-                timestamp = "Hardware Core"
+                title = "Voice Notes & Audio",
+                category = "Notes",
+                summary = "Record voice memos and ask AI to summarize them.",
+                content = "Use the Audio tab to record voice memos and speech. Transcripts can be saved directly as notes or sent to Chat with a single tap to generate concise AI summaries.",
+                timestamp = "User Tip"
             ),
             KnowledgeEntry(
-                title = "RAM Headroom & KV-Cache Guard",
-                category = "Inference",
-                summary = "Pre-budgeting KV-cache memory to prevent Android Low Memory Killer (LMK) kills.",
-                content = "Model weight mmap plus KV-Cache memory (2 * n_layers * n_heads * d_head * ctx_size) must remain safely below Android available RAM with a 400MB safety margin. On 4GB RAM budget phones, Mobile AI clamps contextSize to 1024 or 2048 to ensure 100% crash-free inference.",
-                timestamp = "Memory Core"
-            ),
-            KnowledgeEntry(
-                title = "On-Device Vector Database & RAG",
-                category = "RAG",
-                summary = "Zero-dependency embedded vector similarity with cosine normalization.",
-                content = "Mobile AI features an SQLite-backed vector database with cosine similarity search. Embeddings generated via native llama.cpp embed() or NPU forward passes are stored and searched in under 15ms directly on device, enabling offline Retrieval-Augmented Generation without cloud calls.",
-                timestamp = "Vector Core"
-            ),
-            KnowledgeEntry(
-                title = "NPU & NNAPI Heterogeneous Acceleration",
-                category = "NPU",
-                summary = "Qualcomm Hexagon, MediaTek NeuroPilot APU, and Google Tensor TPU inference.",
-                content = "Mobile AI inspects SoC models via sysfs and probes Android NNAPI. While llama.cpp CPU NEON is optimal for autoregressive GGUF generation, NPU accelerators provide up to 5x faster batch forward passes for embeddings and small vision models on modern budget chipsets.",
-                timestamp = "NPU Core"
-            ),
-            KnowledgeEntry(
-                title = "Autonomous Phone Controller Agent",
-                category = "Agents",
-                summary = "Android AccessibilityService automated perception, reasoning, and navigation.",
-                content = "The Phone Controller Agent dumps the active screen UI hierarchy into interactive elements, uses Local or Cloud AI to plan actions (CLICK, TYPE, SWIPE, SCROLL, LAUNCH_APP), and dispatches precision gestures via Android AccessibilityService to automate tasks autonomously.",
-                timestamp = "Agent Core"
-            ),
-            KnowledgeEntry(
-                title = "Real-time Multimodal Sensory Feeds",
-                category = "Sensory",
-                summary = "Live camera preview, 16kHz audio VU monitoring, and live screen recording.",
-                content = "Mobile AI integrates Camera2 background frame sampling (1-2 FPS for low-power vision), 16kHz PCM audio microphone recording with live normalized RMS VU visualizer, and MediaProjection real-time screen capture to feed multimodal prompts into vision-language models.",
-                timestamp = "Sensory Core"
-            ),
-            KnowledgeEntry(
-                title = "Unified Cloud AI Gateway",
-                category = "Cloud",
-                summary = "Streaming SSE client for Gemini, Claude, OpenAI, DeepSeek, and Mistral.",
-                content = "Unified HTTP/2 client supporting 9+ major AI providers: Google Gemini, Anthropic Claude, OpenAI, DeepSeek V3/R1, xAI Grok, Moonshot Kimi, Z-AI GLM-4, and Mistral AI (leading European provider). Supports real-time streaming, multimodal vision/audio, and encrypted local key storage.",
-                timestamp = "Cloud Core"
+                title = "Google Lens & OCR",
+                category = "Notes",
+                summary = "Extract text from camera snapshots and photos.",
+                content = "Point the camera at documents, signs, or receipts and tap the Lens shutter button. Offline Google ML Kit recognizes the text instantly, allowing you to copy it or ask AI questions about it.",
+                timestamp = "User Tip"
             )
         )
 

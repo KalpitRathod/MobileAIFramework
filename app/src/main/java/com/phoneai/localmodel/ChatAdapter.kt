@@ -41,35 +41,50 @@ class ChatAdapter(
         }
     }
 
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if (payloads.isNotEmpty() && holder is BotViewHolder) {
+            bindBotStreamingState(holder, messages[position])
+            return
+        }
+        super.onBindViewHolder(holder, position, payloads)
+    }
+
+    private fun bindBotStreamingState(holder: BotViewHolder, message: ChatMessage) {
+        val displayText = if (message.isGenerating && message.text.isNotEmpty()) {
+            "${message.text}▌"
+        } else {
+            message.text
+        }
+        holder.tvMessage.text = displayText
+        holder.pbGenerating.visibility = if (message.isGenerating && message.text.isEmpty()) View.VISIBLE else View.GONE
+
+        if (!message.statsInfo.isNullOrBlank()) {
+            holder.tvStats.visibility = View.VISIBLE
+            holder.tvStats.text = message.statsInfo
+        } else if (message.isGenerating) {
+            holder.tvStats.visibility = View.VISIBLE
+            holder.tvStats.text = if (message.streamTokPerSec > 0f) {
+                "⚡ ${String.format("%.1f", message.streamTokPerSec)} tok/s • ${message.streamTokenCount} tokens"
+            } else {
+                "⚡ Generating..."
+            }
+        } else {
+            holder.tvStats.visibility = View.GONE
+        }
+    }
+
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val message = messages[position]
         if (holder is UserViewHolder) {
             holder.tvMessage.text = message.text
             holder.tvTime.text = timeFormatter.format(Date(message.timestamp))
         } else if (holder is BotViewHolder) {
-            // Streaming: show cursor "▌" while generating
-            val displayText = if (message.isGenerating && message.text.isNotEmpty()) {
-                "${message.text}▌"
-            } else {
-                message.text
-            }
-            holder.tvMessage.text = displayText
+            bindBotStreamingState(holder, message)
             holder.tvTime.text = timeFormatter.format(Date(message.timestamp))
-
-            // Show spinner only for the initial blank-loading state before first token
-            holder.pbGenerating.visibility = if (message.isGenerating && message.text.isEmpty()) View.VISIBLE else View.GONE
-
-            if (!message.statsInfo.isNullOrBlank()) {
-                holder.tvStats.visibility = View.VISIBLE
-                holder.tvStats.text = message.statsInfo
-            } else if (message.isGenerating && message.streamTokPerSec > 0f) {
-                // Live tok/s counter during streaming
-                holder.tvStats.visibility = View.VISIBLE
-                holder.tvStats.text = "⚡ ${String.format("%.1f", message.streamTokPerSec)} tok/s • ${message.streamTokenCount} tokens"
-            } else {
-                holder.tvStats.visibility = View.GONE
-            }
-
             holder.btnCopy.setOnClickListener {
                 if (message.text.isNotBlank()) copyToClipboard(it.context, message.text)
             }

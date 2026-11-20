@@ -3,6 +3,13 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) {
+    localPropsFile.withInputStream { localProps.load(it) }
+}
+def geminiApiKey = localProps.getProperty('GEMINI_API_KEY', System.getenv('GEMINI_API_KEY') ?: '')
+
 android {
     namespace 'com.phoneai.localmodel'
     compileSdk 34
@@ -13,6 +20,8 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0.0"
+
+        buildConfigField "String", "GEMINI_API_KEY", "\"${geminiApiKey}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         ndk {
@@ -42,6 +51,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 
     packaging {
@@ -77,8 +87,8 @@ dependencies {
     // Google MediaPipe Tasks GenAI for On-Device LLM Inference
     implementation 'com.google.mediapipe:tasks-genai:0.10.14'
 
-    // On-Device ML Kit Text Recognition (OCR) for converting photos & screenshots to text completely offline
-    implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.0'
+    // On-Device Bundled ML Kit Text Recognition (OCR) - 100% Offline, no Google Play Services download needed
+    implementation 'com.google.mlkit:text-recognition:16.0.0'
 
     // High performance networking for external cloud AI APIs (Gemini, Claude, OpenAI, Mistral, etc.)
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'

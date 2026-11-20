@@ -153,7 +153,8 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Delete Entry"
             android:padding="5dp"
-            android:src="@drawable/ic_delete" />
+            android:src="@drawable/ic_delete"
+            app:tint="@color/google_red" />
     </LinearLayout>
 
 </LinearLayout>

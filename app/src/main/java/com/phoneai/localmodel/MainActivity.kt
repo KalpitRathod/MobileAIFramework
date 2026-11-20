@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -30,6 +31,7 @@ import com.mobileai.framework.cloud.CloudApiKeyStore
 import com.mobileai.framework.cloud.CloudProvider
 import com.mobileai.framework.multimodal.*
 import com.phoneai.localmodel.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
@@ -46,7 +48,6 @@ class MainActivity : AppCompatActivity() {
 
     // Adapters
     private lateinit var chatAdapter: ChatAdapter
-    private lateinit var knowledgeAdapter: KnowledgeAdapter
     private lateinit var agentStepAdapter: AgentStepAdapter
 
     private val messagesList = mutableListOf<ChatMessage>()
@@ -58,16 +59,16 @@ class MainActivity : AppCompatActivity() {
     private var pendingMultimodalContext: MultimodalContext? = null
     private var latestCameraBitmap: Bitmap? = null
     private var latestScreenBitmap: Bitmap? = null
-    private var isRecordingAudio = false
     private var isCameraActive = false
     private var isScreenStreamActive = false
 
     // State
     private var currentTab = Tab.CHAT
-    private var currentKnowledgeCategory: String = "All"
+    private var currentLensMode = LensMode.DOC_TABLE
     private var selectedModelFile: File? = null
 
-    enum class Tab { CHAT, VISUAL, AUDIO, DATABASE, AGENT, HARDWARE }
+    enum class Tab { CHAT, VISUAL, AGENT, HARDWARE }
+    enum class LensMode { DOC_TABLE, HANDWRITING, QC_INSPECT, ASK_AI }
 
     // File picker contract for importing GGUF models
     private val modelPickerLauncher = registerForActivityResult(
@@ -88,17 +89,11 @@ class MainActivity : AppCompatActivity() {
                     val bitmap = BitmapFactory.decodeStream(stream)
                     if (bitmap != null) {
                         latestCameraBitmap = bitmap
-                        val payload = ImagePayload.fromBitmap(bitmap, 80)
+                        val payload = ImagePayload.fromBitmap(bitmap, 90)
                         pendingMultimodalContext = (pendingMultimodalContext ?: MultimodalContext()).copy(cameraImage = payload)
-                        
-                        // Extract text via offline Google ML Kit
-                        lifecycleScope.launch {
-                            val ocrResult = aiEngine.extractTextFromBitmap(bitmap)
-                            val text = ocrResult.getOrDefault("")
-                            if (currentTab == Tab.VISUAL) {
-                                binding.tvVisualOcrResult.text = if (text.isNotBlank()) text else "No text detected in selected photo"
-                                binding.layoutVisualOcrCard.visibility = View.VISIBLE
-                            }
+
+                        if (currentTab == Tab.VISUAL) {
+                            runHybridVisionOcr(bitmap, payload)
                         }
 
                         showAttachmentBanner("📷 Image attached (${bitmap.width}x${bitmap.height})")
@@ -119,9 +114,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
-        val audioGranted = permissions[Manifest.permission.RECORD_AUDIO] ?: false
         if (cameraGranted) Toast.makeText(this, "Camera permission granted", Toast.LENGTH_SHORT).show()
-        if (audioGranted) Toast.makeText(this, "Audio permission granted", Toast.LENGTH_SHORT).show()
     }
 
     private val screenCaptureLauncher = registerForActivityResult(
@@ -170,7 +163,6 @@ class MainActivity : AppCompatActivity() {
         setupChat()
         setupSensory()
         setupAgent()
-        setupKnowledge()
         setupHardware()
         setupModelControls()
 
@@ -179,13 +171,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // NAVIGATION & TAB SWITCHING (Google 4 Tabs)
+    // NAVIGATION & TAB SWITCHING (Chat & Visual Lens)
     // ==========================================
     private fun setupNavigation() {
         binding.tabBuddy.setOnClickListener { switchTab(Tab.CHAT) }
         binding.tabVisual.setOnClickListener { switchTab(Tab.VISUAL) }
-        binding.tabAudio.setOnClickListener { switchTab(Tab.AUDIO) }
-        binding.tabKnowledge.setOnClickListener { switchTab(Tab.DATABASE) }
         binding.btnHardwareInfo.setOnClickListener { switchTab(Tab.HARDWARE) }
         binding.btnCloudHub.setOnClickListener { showCloudHubDialog() }
     }
@@ -193,19 +183,18 @@ class MainActivity : AppCompatActivity() {
     private fun switchTab(tab: Tab) {
         currentTab = tab
 
-        // Toggle Views
+        // Toggle Views (Immersive full-viewport Lens when Visual tab is active!)
+        val isVisualTab = (tab == Tab.VISUAL)
+        binding.topBar.visibility = if (isVisualTab) View.GONE else View.VISIBLE
+        binding.topBarDivider.visibility = if (isVisualTab) View.GONE else View.VISIBLE
         binding.viewBuddy.visibility = if (tab == Tab.CHAT) View.VISIBLE else View.GONE
-        binding.viewVisual.visibility = if (tab == Tab.VISUAL) View.VISIBLE else View.GONE
-        binding.viewAudio.visibility = if (tab == Tab.AUDIO) View.VISIBLE else View.GONE
-        binding.viewKnowledge.visibility = if (tab == Tab.DATABASE) View.VISIBLE else View.GONE
+        binding.viewVisual.visibility = if (isVisualTab) View.VISIBLE else View.GONE
         binding.viewAgent.visibility = if (tab == Tab.AGENT) View.VISIBLE else View.GONE
         binding.viewHardware.visibility = if (tab == Tab.HARDWARE) View.VISIBLE else View.GONE
 
         // Google Brand Colors for Tabs and Selections
         val blue = ContextCompat.getColor(this, R.color.google_blue)
         val red = ContextCompat.getColor(this, R.color.google_red)
-        val green = ContextCompat.getColor(this, R.color.google_green)
-        val yellow = ContextCompat.getColor(this, R.color.google_yellow)
         val muted = ContextCompat.getColor(this, R.color.text_secondary)
 
         // Tab 1: Chat (Google Blue)
@@ -215,33 +204,17 @@ class MainActivity : AppCompatActivity() {
         binding.tvTabBuddy.paint.isFakeBoldText = isChat
         binding.tabBuddyPill.setBackgroundResource(if (isChat) R.drawable.bg_tab_pill_blue else 0)
 
-        // Tab 2: Visual (Google Red)
+        // Tab 2: Visual Lens (Google Red)
         val isVisual = (tab == Tab.VISUAL)
         binding.ivTabVisual.setColorFilter(if (isVisual) red else muted)
         binding.tvTabVisual.setTextColor(if (isVisual) red else muted)
         binding.tvTabVisual.paint.isFakeBoldText = isVisual
         binding.tabVisualPill.setBackgroundResource(if (isVisual) R.drawable.bg_tab_pill_red else 0)
 
-        // Tab 3: Audio (Google Green)
-        val isAudio = (tab == Tab.AUDIO)
-        binding.ivTabAudio.setColorFilter(if (isAudio) green else muted)
-        binding.tvTabAudio.setTextColor(if (isAudio) green else muted)
-        binding.tvTabAudio.paint.isFakeBoldText = isAudio
-        binding.tabAudioPill.setBackgroundResource(if (isAudio) R.drawable.bg_tab_pill_green else 0)
-
-        // Tab 4: Database (Google Yellow / Amber)
-        val isDb = (tab == Tab.DATABASE)
-        binding.ivTabKnowledge.setColorFilter(if (isDb) yellow else muted)
-        binding.tvTabKnowledge.setTextColor(if (isDb) yellow else muted)
-        binding.tvTabKnowledge.paint.isFakeBoldText = isDb
-        binding.tabKnowledgePill.setBackgroundResource(if (isDb) R.drawable.bg_tab_pill_yellow else 0)
-
         // Refresh data on tab switch
         when (tab) {
-            Tab.DATABASE -> loadKnowledgeEntries()
             Tab.HARDWARE -> refreshHardwareDiagnostics()
             Tab.AGENT -> updateAccessibilityStatus()
-            Tab.AUDIO -> checkPermissions()
             Tab.VISUAL -> {
                 checkPermissions()
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED && !isCameraActive) {
@@ -271,6 +244,8 @@ class MainActivity : AppCompatActivity() {
         }
         binding.rvBuddyMessages.layoutManager = layoutManager
         binding.rvBuddyMessages.adapter = chatAdapter
+        // Eliminate flicker & vertical bounce during rapid token-by-token streaming
+        binding.rvBuddyMessages.itemAnimator = null
 
         binding.fabSendBuddy.setOnClickListener {
             if (isGenerating) stopGeneration() else sendChatMessage()
@@ -310,18 +285,6 @@ class MainActivity : AppCompatActivity() {
                 .show()
         }
 
-        binding.btnChatMic.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
-                return@setOnClickListener
-            }
-            switchTab(Tab.AUDIO)
-        }
-
-        binding.btnChatScreen.setOnClickListener {
-            switchTab(Tab.VISUAL)
-        }
-
         binding.btnRemoveAttachment.setOnClickListener {
             pendingMultimodalContext = null
             binding.layoutAttachmentPreview.visibility = View.GONE
@@ -348,12 +311,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Smoothly pins the chat list to the bottom without RecyclerView smoothScrollToPosition bounce/jitter.
+     * If force=false (during token streaming), only auto-scrolls when already near the bottom so the user
+     * can freely scroll up to read earlier messages without being yanked down.
+     */
+    private fun scrollChatToBottom(force: Boolean = false) {
+        val count = chatAdapter.itemCount
+        if (count <= 0) return
+        val rv = binding.rvBuddyMessages
+        val lm = rv.layoutManager as? LinearLayoutManager ?: return
+        val lastVisible = lm.findLastVisibleItemPosition()
+        val isNearBottom = !rv.canScrollVertically(1) || lastVisible >= count - 2
+        if (force || isNearBottom) {
+            rv.post {
+                lm.scrollToPositionWithOffset(count - 1, -100000)
+            }
+        }
+    }
+
     private fun showAttachmentBanner(text: String) {
         binding.layoutAttachmentPreview.visibility = View.VISIBLE
         binding.tvAttachmentSummary.text = text
     }
 
     private fun sendChatMessage() {
+        if (currentInferenceJob?.isActive == true) {
+            Toast.makeText(this, "⏳ Still generating previous response — wait a second or tap Stop.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val prompt = binding.etBuddyInput.text?.toString()?.trim() ?: ""
         if (prompt.isEmpty() && pendingMultimodalContext == null) return
 
@@ -364,17 +351,45 @@ class MainActivity : AppCompatActivity() {
         val cloudStore = aiEngine.mobileAI.cloudApiKeyStore
         val hasActiveCloudKey = cloudStore.getApiKey(cloudStore.getActiveProvider()).isNotBlank()
         val isMultimodalVisual = contextPayload?.cameraImage != null || contextPayload?.screenCapture != null
+        val effectivePrompt = if (prompt.isBlank() && isMultimodalVisual) "Convert to text" else prompt
 
-        // Auto-route to cloud vision if visual frame attached AND cloud is preferred
-        val useCloud = cloudStore.isCloudPreferred() ||
+        // On-device anti-hallucination guardrail: reject gibberish / keyboard-mash before LLM or telemetry
+        if (!isMultimodalVisual && contextPayload?.audioClip == null) {
+            val validation = com.mobileai.framework.router.InputValidator.validateGeneralPrompt(effectivePrompt)
+            if (!validation.isValid) {
+                Toast.makeText(this, "🚫 ${validation.reason}", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+
+        // Autonomous Hybrid Router: Evaluates prompt complexity, thermal state, and offline connectivity
+        val routingDecision = aiEngine.mobileAI.hybridRouter.route(
+            prompt = effectivePrompt,
+            multimodalContext = contextPayload
+        )
+
+        // Progressive-Disclosure Skill Loader: resolve matched skill compactly
+        val matchedSkill = aiEngine.mobileAI.skillLoader.selectSkillsForPrompt(effectivePrompt).firstOrNull()?.id
+            ?: if (isMultimodalVisual) "vision-ocr" else "tokenomics-router"
+
+        // Asynchronously stream routing event & tokenomics metrics to Cloud Run / BigQuery
+        lifecycleScope.launch(Dispatchers.IO) {
+            aiEngine.mobileAI.hybridRouter.streamTelemetryToCloud(
+                decision = routingDecision,
+                skillUsed = matchedSkill
+            )
+        }
+
+        val isOnline = com.mobileai.framework.router.DeviceStateProfile.capture(this, aiEngine.mobileAI.thermalGovernor).isOnline
+        val useCloud = (isMultimodalVisual && isOnline && hasActiveCloudKey) ||
+                (routingDecision.target == com.mobileai.framework.router.RouteTarget.CLOUD_RUN && hasActiveCloudKey) ||
+                cloudStore.isCloudPreferred() ||
                 (!aiEngine.isInitialized && hasActiveCloudKey && !isMultimodalVisual)
 
         if (!useCloud && !aiEngine.isInitialized && !isMultimodalVisual) {
             showModelRequiredDialog(ModelRole.CHAT)
             return
         }
-
-        val effectivePrompt = if (prompt.isBlank() && isMultimodalVisual) "Convert to text" else prompt
 
         val userDisplay = if (contextPayload?.isMultimodal == true) {
             val tag = when {
@@ -390,47 +405,98 @@ class MainActivity : AppCompatActivity() {
         chatAdapter.addMessage(userMsg)
         dbHelper.insertChatMessage(userMsg)
         binding.etBuddyInput.setText("")
-        binding.rvBuddyMessages.smoothScrollToPosition(chatAdapter.itemCount - 1)
+        scrollChatToBottom(force = true)
 
         val botMsg = ChatMessage(text = "", isUser = false, isGenerating = true)
         chatAdapter.addMessage(botMsg)
-        binding.rvBuddyMessages.smoothScrollToPosition(chatAdapter.itemCount - 1)
+        scrollChatToBottom(force = true)
 
         setGeneratingState(true)
 
         currentInferenceJob = lifecycleScope.launch {
             if (useCloud) {
                 val config = cloudStore.getConfig()
-                val streamFlow = aiEngine.mobileAI.cloudClient.generateStream(effectivePrompt, contextPayload, config)
+                val cloudPrompt = if (isMultimodalVisual && (
+                        effectivePrompt.equals("Convert to text", ignoreCase = true) ||
+                        effectivePrompt.contains("extract text", ignoreCase = true) ||
+                        effectivePrompt.contains("read text", ignoreCase = true)
+                    )) {
+                    "Transcribe ALL text in this image verbatim — including messy, dirty, cursive, or slanted handwriting and clean printed text, numbers, equations, and symbols (±, Ø, mm). Preserve line breaks cleanly. Do not summarize or invent text."
+                } else {
+                    effectivePrompt
+                }
+                val streamFlow = aiEngine.mobileAI.cloudClient.generateStream(cloudPrompt, contextPayload, config)
+                var cloudFailed = false
 
                 streamFlow.catch { e ->
-                    chatAdapter.streamChunk(
-                        accumulatedText = "⚠️ Cloud Error: ${e.localizedMessage ?: e.message}",
-                        tokPerSec = 0f,
-                        tokenCount = 0,
-                        isFinished = true,
-                        finalStats = "Cloud Error"
-                    )
-                    setGeneratingState(false)
+                    cloudFailed = true
+                    if (!aiEngine.isInitialized) {
+                        chatAdapter.streamChunk(
+                            accumulatedText = "⚠️ Cloud Error: ${e.localizedMessage ?: e.message}",
+                            tokPerSec = 0f,
+                            tokenCount = 0,
+                            isFinished = true,
+                            finalStats = "Cloud Error"
+                        )
+                        setGeneratingState(false)
+                    }
                 }.collect { chunk ->
+                    if (chunk.isFinished && (chunk.telemetrySummary?.startsWith("API Error") == true || chunk.telemetrySummary == "Network Error") && aiEngine.isInitialized) {
+                        cloudFailed = true
+                        return@collect
+                    }
+                    val statsTag = if (chunk.isFinished) "☁️ Cloud Gemini (Score ${routingDecision.complexityScore}/100) • ${chunk.telemetrySummary}" else null
                     chatAdapter.streamChunk(
                         accumulatedText = chunk.text,
                         tokPerSec = chunk.tokensPerSecond,
                         tokenCount = chunk.tokensGenerated,
                         isFinished = chunk.isFinished,
-                        finalStats = if (chunk.isFinished) chunk.telemetrySummary else null
+                        finalStats = statsTag
                     )
-                    binding.rvBuddyMessages.smoothScrollToPosition(chatAdapter.itemCount - 1)
+                    scrollChatToBottom(force = false)
 
                     if (chunk.isFinished) {
                         val completedMsg = ChatMessage(
                             text = chunk.text,
                             isUser = false,
                             isGenerating = false,
-                            statsInfo = chunk.telemetrySummary
+                            statsInfo = statsTag
                         )
                         dbHelper.insertChatMessage(completedMsg)
                         setGeneratingState(false)
+                    }
+                }
+
+                // True Hybrid Resilience: if Cloud failed while online, run offline OCR on any attached photo then fall back to local LLM!
+                if (cloudFailed && aiEngine.isInitialized) {
+                    chatAdapter.streamChunk(
+                        accumulatedText = "⚡ Cloud unreachable — running offline OCR + On-Device Local Model...",
+                        tokPerSec = 0f,
+                        tokenCount = 0,
+                        isFinished = false
+                    )
+                    val visualPayload = contextPayload?.cameraImage ?: contextPayload?.screenCapture?.image
+                    val localPrompt = if (visualPayload != null) {
+                        val ocrText = aiEngine.extractTextFromPayload(visualPayload).getOrDefault("").trim()
+                        if (ocrText.isNotBlank() && !ocrText.startsWith("No legible")) {
+                            "The text below was extracted from a photo using noisy offline OCR (so some words may have character typos like 'mdifcatten'->'modification' or '€quetren'->'equation'). First mentally repair any OCR glitches using context, then answer concisely.\n\nRaw OCR:\n```\n$ocrText\n```\n\nUser Question: $effectivePrompt"
+                        } else {
+                            effectivePrompt
+                        }
+                    } else {
+                        effectivePrompt
+                    }
+                    aiEngine.generateStream(localPrompt, maxTokens = 512).catch { e ->
+                        chatAdapter.streamChunk("⚠️ Local Fallback Error: ${e.message}", 0f, 0, true, "Error")
+                        setGeneratingState(false)
+                    }.collect { chunk ->
+                        val statsTag = if (chunk.isFinished) "⚡ Local Fallback ($0) • ${chunk.telemetrySummary}" else null
+                        chatAdapter.streamChunk(chunk.text, chunk.tokensPerSecond, chunk.tokensGenerated, chunk.isFinished, statsTag)
+                        scrollChatToBottom(force = false)
+                        if (chunk.isFinished) {
+                            dbHelper.insertChatMessage(ChatMessage(text = chunk.text, isUser = false, isGenerating = false, statsInfo = statsTag))
+                            setGeneratingState(false)
+                        }
                     }
                 }
             } else if (isMultimodalVisual) {
@@ -530,7 +596,7 @@ class MainActivity : AppCompatActivity() {
                         isFinished = chunk.isFinished,
                         finalStats = statsTag
                     )
-                    binding.rvBuddyMessages.smoothScrollToPosition(chatAdapter.itemCount - 1)
+                    scrollChatToBottom(force = false)
 
                     if (chunk.isFinished) {
                         val completedMsg = ChatMessage(
@@ -559,21 +625,22 @@ class MainActivity : AppCompatActivity() {
                     )
                     setGeneratingState(false)
                 }.collect { chunk ->
+                    val statsTag = if (chunk.isFinished) "⚡ Edge Local (Saved ${routingDecision.tokensSaved} tokens) • ${chunk.telemetrySummary}" else null
                     chatAdapter.streamChunk(
                         accumulatedText = chunk.text,
                         tokPerSec = chunk.tokensPerSecond,
                         tokenCount = chunk.tokensGenerated,
                         isFinished = chunk.isFinished,
-                        finalStats = if (chunk.isFinished) chunk.telemetrySummary else null
+                        finalStats = statsTag
                     )
-                    binding.rvBuddyMessages.smoothScrollToPosition(chatAdapter.itemCount - 1)
+                    scrollChatToBottom(force = false)
 
                     if (chunk.isFinished) {
                         val completedMsg = ChatMessage(
                             text = chunk.text,
                             isUser = false,
                             isGenerating = false,
-                            statsInfo = chunk.telemetrySummary
+                            statsInfo = statsTag
                         )
                         dbHelper.insertChatMessage(completedMsg)
                         setGeneratingState(false)
@@ -606,15 +673,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // 2. SENSORY: CAMERA, AUDIO & SCREEN STREAM
+    // 2. VISUAL LENS: CAMERA & OFFLINE OCR
     // ==========================================
     private fun checkPermissions() {
         val needed = mutableListOf<String>()
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             needed.add(Manifest.permission.CAMERA)
-        }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            needed.add(Manifest.permission.RECORD_AUDIO)
         }
         if (needed.isNotEmpty()) {
             permissionLauncher.launch(needed.toTypedArray())
@@ -664,32 +728,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Lens Shutter: Capture + Instant Offline ML Kit OCR
+        // Lens Shutter: Capture direct from Viewfinder + Hybrid Handwriting & Print Vision OCR
         binding.btnSnapCameraToChat.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
                 return@setOnClickListener
             }
 
-            aiEngine.mobileAI.cameraManager.captureSnapshot({ bitmap, payload ->
+            val bitmap = binding.cameraTextureView.bitmap
+            if (bitmap != null) {
                 latestCameraBitmap = bitmap
+                val payload = ImagePayload.fromBitmap(bitmap, 90)
                 pendingMultimodalContext = (pendingMultimodalContext ?: MultimodalContext()).copy(cameraImage = payload)
-                
-                // Instant ML Kit OCR extraction
-                lifecycleScope.launch {
-                    val ocrResult = aiEngine.extractTextFromBitmap(bitmap)
-                    val text = ocrResult.getOrDefault("")
-                    binding.tvVisualOcrResult.text = if (text.isNotBlank()) text else "No text detected in snapshot"
-                    binding.layoutVisualOcrCard.visibility = View.VISIBLE
-                }
-                
-                showAttachmentBanner("📷 Camera snapshot attached")
-                if (binding.etBuddyInput.text.isNullOrBlank()) {
-                    binding.etBuddyInput.setText("Convert to text")
-                }
-            }, { err ->
-                Toast.makeText(this, "Capture error: $err", Toast.LENGTH_SHORT).show()
-            })
+
+                runHybridVisionOcr(bitmap, payload)
+                showAttachmentBanner("📷 Camera snapshot captured")
+            } else {
+                Toast.makeText(this, "Starting camera preview... tap again in a moment", Toast.LENGTH_SHORT).show()
+                startCameraFeed()
+            }
         }
 
         // Lens Gallery Button
@@ -698,33 +755,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.tvLensModelBadge.setOnClickListener {
-            showModelSelectionDialog(ModelRole.VISUAL)
+            showModelSelectionDialog(ModelRole.CHAT)
         }
 
-        binding.tvAudioModelStatus.setOnClickListener {
-            showModelSelectionDialog(ModelRole.AUDIO)
-        }
+        // Transparent Glassmorphic Feature Menu inside Visual Lens
+        setupLensTransparentMenu()
 
         // Lens OCR Bottom Sheet Actions
         binding.btnVisualAskChat.setOnClickListener {
-            val cloudStore = aiEngine.mobileAI.cloudApiKeyStore
-            val hasActiveCloudKey = cloudStore.getApiKey(cloudStore.getActiveProvider()).isNotBlank()
-            val useCloud = cloudStore.isCloudPreferred() || (!aiEngine.isInitialized && hasActiveCloudKey)
-
-            if (!useCloud && !aiEngine.isInitialized) {
-                showModelRequiredDialog(ModelRole.VISUAL)
-                return@setOnClickListener
-            }
-
             val ocrText = binding.tvVisualOcrResult.text.toString()
-            val query = if (ocrText.isNotBlank() && !ocrText.startsWith("No text")) {
+            val query = if (ocrText.isNotBlank() && !ocrText.startsWith("No text") && !ocrText.startsWith("Scanning")) {
                 "Explain and summarize this detected text:\n$ocrText"
             } else {
-                "Explain this photo"
+                "Explain what you see in this photo"
             }
             binding.etBuddyInput.setText(query)
             binding.layoutVisualOcrCard.visibility = View.GONE
             switchTab(Tab.CHAT)
+            sendChatMessage()
         }
 
         binding.btnVisualCopyOcr.setOnClickListener {
@@ -739,115 +787,97 @@ class MainActivity : AppCompatActivity() {
             binding.layoutVisualOcrCard.visibility = View.GONE
         }
 
-        // Lens Mode Switcher (Lens vs Screen Stream)
-        binding.btnLensModeCamera.setOnClickListener {
-            binding.cameraTextureView.visibility = View.VISIBLE
-            binding.ivLensReticle.visibility = View.VISIBLE
-            binding.ivScreenFeedPreview.visibility = View.GONE
-            binding.layoutScreenControls.visibility = View.GONE
-            binding.btnLensModeCamera.setBackgroundResource(R.drawable.bg_tab_pill_red)
-            binding.btnLensModeCamera.setTextColor(ContextCompat.getColor(this, R.color.google_red))
-            binding.btnLensModeScreen.setBackgroundResource(0)
-            binding.btnLensModeScreen.setTextColor(ContextCompat.getColor(this, R.color.white))
-            startCameraFeed()
-        }
-
-        binding.btnLensModeScreen.setOnClickListener {
-            stopCameraFeed()
-            binding.cameraTextureView.visibility = View.GONE
-            binding.ivLensReticle.visibility = View.GONE
-            binding.ivScreenFeedPreview.visibility = View.VISIBLE
-            binding.layoutScreenControls.visibility = View.VISIBLE
-            binding.btnLensModeScreen.setBackgroundResource(R.drawable.bg_tab_pill_blue)
-            binding.btnLensModeScreen.setTextColor(ContextCompat.getColor(this, R.color.google_blue))
-            binding.btnLensModeCamera.setBackgroundResource(0)
-            binding.btnLensModeCamera.setTextColor(ContextCompat.getColor(this, R.color.white))
-        }
-
-        // --- 2. GOOGLE RECORDER VOICE CONTROLS ---
-        binding.btnSensoryRecordMic.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+        // ShopFloor AI: Sync Lens Scan to Cloud Run -> BigQuery (Doc->Table OR QC Inspections)
+        binding.btnVisualSyncQc.setOnClickListener {
+            if (currentLensMode == LensMode.DOC_TABLE) {
+                val bmp = latestCameraBitmap
+                val payload = pendingMultimodalContext?.cameraImage
+                if (bmp != null && payload != null) {
+                    runHybridVisionOcr(bmp, payload)
+                } else {
+                    Toast.makeText(this, "Scan or pick a document first", Toast.LENGTH_SHORT).show()
+                }
                 return@setOnClickListener
             }
 
-            if (isRecordingAudio) {
-                aiEngine.mobileAI.audioManager.stopLiveRecording()
-                isRecordingAudio = false
-                binding.tvAudioRecordStatus.text = "Tap microphone to record"
-                binding.tvAudioRecordStatus.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-            } else {
-                aiEngine.mobileAI.audioManager.startLiveRecording(object : AudioInputManager.AudioStreamListener {
-                    override fun onAmplitudeUpdate(rmsNormalized: Float) {
-                        binding.pbAudioWaveform.progress = (rmsNormalized * 100).toInt()
-                    }
-
-                    override fun onRecordingStarted() {
-                        isRecordingAudio = true
-                        binding.tvAudioRecordStatus.text = "🔴 Recording live audio..."
-                        binding.tvAudioRecordStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.google_red))
-                        Toast.makeText(this@MainActivity, "Recording live audio...", Toast.LENGTH_SHORT).show()
-                    }
-
-                    override fun onRecordingFinished(wavBytes: ByteArray, durationMs: Long) {
-                        isRecordingAudio = false
-                        binding.tvAudioRecordStatus.text = "Audio recorded (${durationMs / 1000}s). Tap to record again."
-                        binding.tvAudioRecordStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.google_green))
-                        val payload = AudioPayload.fromBytes(wavBytes, "audio/wav", durationMs)
-                        pendingMultimodalContext = (pendingMultimodalContext ?: MultimodalContext()).copy(audioClip = payload)
-                        showAttachmentBanner("🎙️ Audio clip attached (${durationMs / 1000}s)")
-                        switchTab(Tab.CHAT)
-                    }
-
-                    override fun onError(message: String) {
-                        isRecordingAudio = false
-                        binding.tvAudioRecordStatus.text = "Tap microphone to record"
-                        binding.tvAudioRecordStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_secondary))
-                        Toast.makeText(this@MainActivity, "Audio error: $message", Toast.LENGTH_SHORT).show()
-                    }
-                })
-            }
-        }
-
-        binding.btnSensorySpeechToText.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+            val ocrText = binding.tvVisualOcrResult.text.toString().trim()
+            if (ocrText.isBlank() || ocrText.startsWith("Scanning") || ocrText.startsWith("No text") || ocrText.startsWith("⚠️") || ocrText.startsWith("🚫")) {
+                Toast.makeText(this, "Scan a valid part tag or dimension report first", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            aiEngine.mobileAI.audioManager.startSpeechToText(object : AudioInputManager.SpeechRecognitionListener {
-                override fun onPartialTranscript(partialText: String) {
-                    binding.tvSensoryAudioTranscript.text = partialText
-                }
+            // On-device strict QC validation: reject gibberish / non-dimensional text before touching SQLite or BigQuery!
+            val scanValidation = com.mobileai.framework.router.InputValidator.validateQcScanText(ocrText)
+            if (!scanValidation.isValid) {
+                val rejectMsg = "🚫 REJECTED — ${scanValidation.reason}"
+                binding.tvVisualOcrResult.text = "$rejectMsg\n\n$ocrText"
+                Toast.makeText(this, rejectMsg.take(120), Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
 
-                override fun onFinalTranscript(text: String) {
-                    binding.tvSensoryAudioTranscript.text = text
-                    pendingMultimodalContext = (pendingMultimodalContext ?: MultimodalContext()).copy(audioTranscript = text)
-                    showAttachmentBanner("📝 Speech transcript attached: \"${text.take(30)}...\"")
-                }
+            binding.btnVisualSyncQc.isEnabled = false
+            binding.btnVisualSyncQc.text = "⏳ Verifying & Syncing to BigQuery QC DB..."
 
-                override fun onError(error: String) {
-                    val hasWhisper = aiEngine.isInitialized && ModelFileManager.isAudioModel(aiEngine.currentModelName)
-                    if (!hasWhisper) {
-                        showModelRequiredDialog(ModelRole.AUDIO)
+            lifecycleScope.launch(Dispatchers.IO) {
+                var accepted = true
+                var verdictMsg: String
+                try {
+                    val endpoint = "${aiEngine.mobileAI.hybridRouter.cloudGatewayUrl}/v1/qc/scan-and-update"
+                    val payload = org.json.JSONObject().apply {
+                        put("ocr_text", ocrText)
+                        pendingMultimodalContext?.cameraImage?.base64Data?.let { imgB64 ->
+                            put("image_base64", imgB64)
+                            put("mime_type", "image/jpeg")
+                        }
+                        put("source", "ANDROID_LENS_OCR")
+                        put("operator", "K. Rathod")
+                    }
+                    val conn = (java.net.URL(endpoint).openConnection() as java.net.HttpURLConnection).apply {
+                        requestMethod = "POST"
+                        setRequestProperty("Content-Type", "application/json")
+                        doOutput = true
+                        connectTimeout = 8000
+                        readTimeout = 20000
+                    }
+                    conn.outputStream.use { it.write(payload.toString().toByteArray()) }
+                    val code = conn.responseCode
+                    if (code in 200..299) {
+                        val body = conn.inputStream.bufferedReader().readText()
+                        val json = org.json.JSONObject(body)
+                        accepted = json.optBoolean("accepted", true)
+                        verdictMsg = json.optString("verdict", if (accepted) "✅ Logged to Cloud BigQuery QC DB!" else "🚫 Rejected invalid inspection scan.")
                     } else {
-                        Toast.makeText(this@MainActivity, "STT: $error", Toast.LENGTH_SHORT).show()
+                        verdictMsg = "💾 Saved offline (Cloud HTTP $code)"
                     }
+                    conn.disconnect()
+                } catch (e: Exception) {
+                    verdictMsg = "✈️ Saved offline in SQLite (Offline Mode)"
                 }
-            })
-        }
 
-        binding.btnSensorySendAudioToBuddy.setOnClickListener {
-            val transcript = binding.tvSensoryAudioTranscript.text.toString()
-            if (transcript.isNotBlank() && transcript != "Live speech transcription appears here...") {
-                binding.etBuddyInput.setText(transcript)
-                switchTab(Tab.CHAT)
-            } else {
-                Toast.makeText(this, "Record speech first to get a transcript.", Toast.LENGTH_SHORT).show()
+                // Persist to local SQLite ONLY if valid & accepted (never pollute local DB with rejected scans!)
+                if (accepted) {
+                    try {
+                        val entry = KnowledgeEntry(
+                            title = "QC Scan (${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())})",
+                            category = "Notes",
+                            summary = verdictMsg.take(80),
+                            content = "$verdictMsg\n\nRaw OCR:\n$ocrText",
+                            timestamp = "Lens QC"
+                        )
+                        dbHelper.insertKnowledge(entry)
+                    } catch (_: Exception) {}
+                }
+
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    binding.btnVisualSyncQc.isEnabled = true
+                    binding.btnVisualSyncQc.text = "🏭 Log Dimension Scan to Cloud QC BigQuery"
+                    binding.tvVisualOcrResult.text = "$verdictMsg\n\n$ocrText"
+                    Toast.makeText(this@MainActivity, verdictMsg.take(110), Toast.LENGTH_LONG).show()
+                }
             }
         }
 
-        // --- 3. SCREEN CAPTURE & STREAM ---
+        // --- 2. SCREEN CAPTURE & STREAM ---
         binding.btnSensoryScreenStream.setOnClickListener {
             if (isScreenStreamActive) {
                 aiEngine.mobileAI.screenManager.stopScreenStream()
@@ -874,6 +904,282 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Start Screen Stream first to capture live frames.", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun setupLensTransparentMenu() {
+        val modePills = listOf(
+            Triple(binding.chipLensDocTable, binding.tvLensDocTableLabel, LensMode.DOC_TABLE),
+            Triple(binding.chipLensHandwriting, binding.tvLensHandwritingLabel, LensMode.HANDWRITING),
+            Triple(binding.chipLensQcInspect, binding.tvLensQcLabel, LensMode.QC_INSPECT),
+            Triple(binding.chipLensAskAi, binding.tvLensAskAiLabel, LensMode.ASK_AI)
+        )
+
+        fun updateLensModeUi(mode: LensMode) {
+            currentLensMode = mode
+            for ((pill, label, m) in modePills) {
+                if (m == mode) {
+                    pill.setBackgroundResource(R.drawable.bg_lens_dock_active)
+                    label.setTextColor(ContextCompat.getColor(this, R.color.white))
+                    label.setTypeface(null, android.graphics.Typeface.BOLD)
+                } else {
+                    pill.background = null
+                    label.setTextColor(0xD9FFFFFF.toInt())
+                    label.setTypeface(null, android.graphics.Typeface.NORMAL)
+                }
+            }
+            binding.tvLensModelBadge.text = when (mode) {
+                LensMode.DOC_TABLE -> "MobileAI Lens • Doc Table"
+                LensMode.HANDWRITING -> "MobileAI Lens • Handwriting"
+                LensMode.QC_INSPECT -> "MobileAI Lens • QC Check"
+                LensMode.ASK_AI -> "MobileAI Lens • Ask AI"
+            }
+            binding.btnVisualSyncQc.text = when (mode) {
+                LensMode.DOC_TABLE -> "📄 Re-Convert & Save Table to Cloud DB"
+                else -> "🏭 Log Dimension Scan to Cloud QC BigQuery"
+            }
+        }
+
+        for ((pill, _, m) in modePills) {
+            pill.setOnClickListener { updateLensModeUi(m) }
+        }
+        updateLensModeUi(LensMode.DOC_TABLE)
+    }
+
+    /**
+     * Hybrid Document-to-Table & Handwriting Vision Pipeline driven by the Transparent Lens Menu.
+     */
+    private fun runHybridVisionOcr(bitmap: Bitmap, payload: ImagePayload) {
+        if (currentLensMode == LensMode.ASK_AI) {
+            binding.layoutVisualOcrCard.visibility = View.GONE
+            if (binding.etBuddyInput.text.isNullOrBlank()) {
+                binding.etBuddyInput.setText("Analyze this scanned document and summarize key details")
+            }
+            switchTab(Tab.CHAT)
+            sendChatMessage()
+            return
+        }
+
+        binding.tvVisualOcrHeader.text = when (currentLensMode) {
+            LensMode.DOC_TABLE -> "📄 Converting Document → Abstract Table..."
+            LensMode.QC_INSPECT -> "🏭 Checking QC Dimensions & Tolerances..."
+            else -> "✨ Reading Handwriting & Print..."
+        }
+        binding.tvVisualOcrResult.text = "Scanning page with Enhanced ML Kit + Gemini Vision..."
+        binding.layoutVisualOcrCard.visibility = View.VISIBLE
+
+        lifecycleScope.launch {
+            val offlineResult = aiEngine.extractTextFromBitmap(bitmap)
+            val offlineText = offlineResult.getOrDefault("").trim()
+            val hasOfflineText = offlineResult.isSuccess && offlineText.isNotBlank() && !offlineText.startsWith("No legible")
+
+            val deviceState = com.mobileai.framework.router.DeviceStateProfile.capture(
+                this@MainActivity,
+                aiEngine.mobileAI.thermalGovernor
+            )
+
+            // 1. DOC -> ABSTRACT TABLE MODE (Default)
+            if (currentLensMode == LensMode.DOC_TABLE) {
+                if (!deviceState.isOnline) {
+                    if (hasOfflineText && aiEngine.isInitialized) {
+                        refineOfflineOcrWithGemma(rawOcr = offlineText, asTable = true)
+                    } else {
+                        binding.tvVisualOcrHeader.text = "✈️ Offline Table Preview"
+                        val localTable = formatOfflineLinesAsTable(offlineText)
+                        binding.tvVisualOcrResult.text = if (hasOfflineText) localTable else "No text detected offline. Align document cleanly or go online for Gemini Vision."
+                    }
+                    return@launch
+                }
+
+                binding.tvVisualOcrHeader.text = "📄 Extracting Tabular Data → Cloud BigQuery..."
+                if (hasOfflineText) binding.tvVisualOcrResult.text = "⏳ Structuring into dynamic table...\n\n$offlineText"
+
+                val tableResult = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    try {
+                        val endpoint = "${aiEngine.mobileAI.hybridRouter.cloudGatewayUrl}/v1/docs/scan-to-table"
+                        val bodyJson = org.json.JSONObject().apply {
+                            put("ocr_text", if (hasOfflineText) offlineText else "")
+                            put("image_base64", payload.base64Data)
+                            put("mime_type", "image/jpeg")
+                            put("source", "ANDROID_LENS_DOC_SCAN")
+                        }
+                        val conn = (java.net.URL(endpoint).openConnection() as java.net.HttpURLConnection).apply {
+                            requestMethod = "POST"
+                            setRequestProperty("Content-Type", "application/json")
+                            doOutput = true
+                            connectTimeout = 10000
+                            readTimeout = 35000
+                        }
+                        conn.outputStream.use { it.write(bodyJson.toString().toByteArray()) }
+                        val code = conn.responseCode
+                        val respText = (if (code in 200..299) conn.inputStream else conn.errorStream)?.bufferedReader()?.readText() ?: ""
+                        conn.disconnect()
+                        org.json.JSONObject(respText)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                if (tableResult != null && tableResult.optBoolean("accepted", false)) {
+                    val doc = tableResult.optJSONObject("document")
+                    val title = doc?.optString("title", "Scanned Document") ?: "Scanned Document"
+                    val docId = doc?.optString("doc_id", "") ?: ""
+                    val bqFlag = if (tableResult.optBoolean("bigquery_streamed", false)) "BigQuery ✓" else "Cloud Saved ✓"
+                    val rendered = formatJsonDocAsTable(doc)
+                    binding.tvVisualOcrHeader.text = "✅ $docId • $title ($bqFlag)"
+                    binding.tvVisualOcrResult.text = rendered
+                    Toast.makeText(this@MainActivity, "✅ Tabular data saved to Cloud DB ($docId)", Toast.LENGTH_SHORT).show()
+                } else {
+                    if (hasOfflineText && aiEngine.isInitialized) {
+                        refineOfflineOcrWithGemma(rawOcr = offlineText, asTable = true)
+                    } else {
+                        val err = tableResult?.optString("message")?.takeIf { it.isNotBlank() }
+                            ?: "Could not convert scan to table."
+                        binding.tvVisualOcrHeader.text = "🚫 Document Table Scan"
+                        binding.tvVisualOcrResult.text = if (hasOfflineText) "$err\n\nRaw OCR:\n$offlineText" else err
+                    }
+                }
+                return@launch
+            }
+
+            // 2. QC INSPECT MODE
+            if (currentLensMode == LensMode.QC_INSPECT) {
+                binding.tvVisualOcrResult.text = if (hasOfflineText) offlineText else "Scanning inspection dimensions..."
+                if (deviceState.isOnline) {
+                    binding.btnVisualSyncQc.performClick()
+                } else if (hasOfflineText && aiEngine.isInitialized) {
+                    refineOfflineOcrWithGemma(rawOcr = offlineText, asTable = true)
+                } else {
+                    binding.tvVisualOcrHeader.text = "✈️ Offline OCR Preview (Tap Sync when online)"
+                }
+                return@launch
+            }
+
+            // 3. HANDWRITING & PRINT VERBATIM OCR MODE
+            val geminiConfig = aiEngine.mobileAI.cloudApiKeyStore.getConfig(com.mobileai.framework.cloud.CloudProvider.GEMINI)
+            if (!deviceState.isOnline || geminiConfig.apiKey.isBlank()) {
+                if (hasOfflineText && aiEngine.isInitialized) {
+                    refineOfflineOcrWithGemma(rawOcr = offlineText, asTable = false)
+                } else {
+                    binding.tvVisualOcrHeader.text = "✈️ Offline Enhanced OCR (ML Kit)"
+                    binding.tvVisualOcrResult.text = if (hasOfflineText) offlineText else "No text detected offline. Connect to Wi-Fi/4G for Gemini Vision dirty-handwriting OCR."
+                }
+                return@launch
+            }
+
+            if (hasOfflineText) {
+                binding.tvVisualOcrHeader.text = "✨ Enhancing handwriting with Gemini Vision..."
+                binding.tvVisualOcrResult.text = offlineText
+            } else {
+                binding.tvVisualOcrHeader.text = "✨ Reading handwriting with Gemini Vision..."
+                binding.tvVisualOcrResult.text = "⏳ Analyzing messy handwriting & print with Gemini 2.5 Flash Vision..."
+            }
+
+            val visionResult = aiEngine.mobileAI.cloudClient.transcribeImageText(payload, geminiConfig)
+            visionResult.onSuccess { transcribed ->
+                if (transcribed.equals("NO_TEXT_FOUND", ignoreCase = true) || transcribed.isBlank()) {
+                    binding.tvVisualOcrHeader.text = "✨ Gemini Vision OCR"
+                    binding.tvVisualOcrResult.text = if (hasOfflineText) offlineText else "No readable text found in image."
+                } else {
+                    binding.tvVisualOcrHeader.text = "✨ Gemini Vision OCR (Handwriting & Print)"
+                    binding.tvVisualOcrResult.text = transcribed
+                }
+            }.onFailure {
+                if (hasOfflineText && aiEngine.isInitialized) {
+                    refineOfflineOcrWithGemma(rawOcr = offlineText, asTable = false)
+                } else {
+                    binding.tvVisualOcrHeader.text = "✈️ Offline Enhanced OCR (Cloud Fallback)"
+                    binding.tvVisualOcrResult.text = if (hasOfflineText) offlineText else "No text detected. Try better lighting or steady focus."
+                }
+            }
+        }
+    }
+
+    /**
+     * 2-Stage 100% Offline Pipeline:
+     * Raw ML Kit OCR (fast, noisy on dirty handwriting) -> On-Device Google Gemma 2 2B Denoiser & Table Structurer ($0 cloud cost).
+     */
+    private suspend fun refineOfflineOcrWithGemma(rawOcr: String, asTable: Boolean) {
+        val modelShort = if (aiEngine.currentModelName.contains("gemma", ignoreCase = true)) "Gemma 2 2B" else "Local AI"
+        binding.tvVisualOcrHeader.text = if (asTable) {
+            "✈️ Offline $modelShort • Building Clean Table..."
+        } else {
+            "✈️ Offline $modelShort • Repairing Handwriting..."
+        }
+        binding.tvVisualOcrResult.text = "⏳ $modelShort is repairing OCR typos locally ($0 cloud)...\n\n$rawOcr"
+
+        val prompt = if (asTable) {
+            """
+            The text below came from noisy offline OCR on a handwritten or printed page (so words may have character typos like 'mdifcatten'->'modification', '€quetren'->'equation', 'pluy it baek'->'plug it back').
+            1. Fix all obvious OCR character glitches using context.
+            2. Organize the repaired information into a clean, concise pipe-separated table (Header | Column 2 | ...).
+            3. Output ONLY the clean repaired table — no intro or commentary.
+
+            Noisy OCR:
+            $rawOcr
+            """.trimIndent()
+        } else {
+            """
+            The text below came from noisy offline OCR on handwritten notes (so words may have character typos like 'mdifcatten'->'modification', 'canplem€toay €quetren'->'complementary equation', 'pluy it baek'->'plug it back').
+            Reconstruct the clean, readable English text and math/engineering terms line-by-line using context.
+            Output ONLY the repaired clean text — no intro or explanation.
+
+            Noisy OCR:
+            $rawOcr
+            """.trimIndent()
+        }
+
+        val sysPrompt = "You are an accurate on-device OCR reconstruction and document structuring engine. Fix OCR character typos faithfully without inventing unrelated facts."
+        try {
+            aiEngine.generateStream(prompt = prompt, maxTokens = 384, systemPrompt = sysPrompt)
+                .catch {
+                    binding.tvVisualOcrHeader.text = "✈️ Offline OCR Preview"
+                    binding.tvVisualOcrResult.text = if (asTable) formatOfflineLinesAsTable(rawOcr) else rawOcr
+                }
+                .collect { chunk ->
+                    if (chunk.text.isNotBlank()) {
+                        binding.tvVisualOcrResult.text = chunk.text.trim()
+                    }
+                    if (chunk.isFinished) {
+                        val speed = String.format(java.util.Locale.US, "%.1f", chunk.tokensPerSecond)
+                        binding.tvVisualOcrHeader.text = if (asTable) {
+                            "⚡ Offline $modelShort Table • ${speed} tok/s • $0"
+                        } else {
+                            "⚡ Offline $modelShort Repaired • ${speed} tok/s • $0"
+                        }
+                    }
+                }
+        } catch (_: Exception) {
+            binding.tvVisualOcrHeader.text = "✈️ Offline OCR Preview"
+            binding.tvVisualOcrResult.text = if (asTable) formatOfflineLinesAsTable(rawOcr) else rawOcr
+        }
+    }
+
+    private fun formatJsonDocAsTable(doc: org.json.JSONObject?): String {
+        if (doc == null) return ""
+        val sb = StringBuilder()
+        val docType = doc.optString("doc_type", "Abstract Table")
+        val summary = doc.optString("summary", "")
+        sb.append("[$docType] $summary\n\n")
+        val cols = doc.optJSONArray("columns") ?: return sb.toString()
+        val rows = doc.optJSONArray("rows") ?: return sb.toString()
+
+        val colList = (0 until cols.length()).map { cols.optString(it) }
+        sb.append(colList.joinToString(" | ")).append("\n")
+        sb.append(colList.joinToString("-+-") { "-".repeat(it.length.coerceIn(4, 12)) }).append("\n")
+        for (i in 0 until rows.length()) {
+            val r = rows.optJSONArray(i) ?: continue
+            val cells = (0 until r.length()).map { r.optString(it) }
+            sb.append(cells.joinToString(" | ")).append("\n")
+        }
+        return sb.toString().trim()
+    }
+
+    private fun formatOfflineLinesAsTable(rawText: String): String {
+        val lines = rawText.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        if (lines.isEmpty()) return "No rows extracted."
+        val sb = StringBuilder("Line | Extracted Content\n-----+------------------\n")
+        lines.forEachIndexed { idx, line -> sb.append("${idx + 1}    | $line\n") }
+        return sb.toString().trim()
     }
 
     // ==========================================
@@ -962,194 +1268,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // 4. KNOWLEDGE: ON-DEVICE VECTOR DATABASE & RAG
-    // ==========================================
-    private fun setupKnowledge() {
-        knowledgeAdapter = KnowledgeAdapter(
-            entries = mutableListOf(),
-            onQueryRagClick = { entry ->
-                queryKnowledgeWithRag(entry)
-            },
-            onDeleteClick = { entry ->
-                deleteKnowledgeEntry(entry)
-            }
-        )
-
-        binding.rvKnowledgeEntries.layoutManager = LinearLayoutManager(this)
-        binding.rvKnowledgeEntries.adapter = knowledgeAdapter
-
-        // Category Filter Chips
-        val catChips = listOf(
-            Pair(binding.filterCatAll, "All"),
-            Pair(binding.filterCatHardware, "Hardware"),
-            Pair(binding.filterCatInference, "Inference"),
-            Pair(binding.filterCatNpu, "NPU"),
-            Pair(binding.filterCatAgents, "Agents"),
-            Pair(binding.filterCatRAG, "RAG"),
-            Pair(binding.filterCatCloud, "Cloud")
-        )
-
-        for ((view, cat) in catChips) {
-            view.setOnClickListener {
-                currentKnowledgeCategory = cat
-                for ((v, c) in catChips) {
-                    if (c == cat) {
-                        v.setBackgroundResource(R.drawable.bg_card_boxy_gold)
-                        v.setTextColor(ContextCompat.getColor(this, R.color.google_yellow))
-                    } else {
-                        v.setBackgroundResource(R.drawable.bg_tag_boxy)
-                        v.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-                    }
-                }
-                loadKnowledgeEntries()
-            }
-        }
-
-        // Live Search
-        binding.etKnowledgeSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                loadKnowledgeEntries(s?.toString())
-            }
-            override fun afterTextChanged(s: Editable?) {}
-        })
-
-        // Re-index Vector DB button
-        binding.btnReindexVectors.setOnClickListener {
-            reindexKnowledgeVectors()
-        }
-
-        binding.tvKnowledgeCountBadge.setOnClickListener {
-            showModelSelectionDialog(ModelRole.EMBEDDING)
-        }
-
-        // Add Knowledge FAB
-        binding.fabNewKnowledge.setOnClickListener {
-            showNewKnowledgeDialog()
-        }
-    }
-
-    private fun loadKnowledgeEntries(query: String? = binding.etKnowledgeSearch.text?.toString()) {
-        val entries = dbHelper.getAllKnowledge(query = query, category = currentKnowledgeCategory)
-        knowledgeAdapter.updateList(entries)
-        val modelTag = if (aiEngine.isInitialized) {
-            val role = ModelFileManager.getModelRole(aiEngine.currentModelName)
-            "${role.icon} ${aiEngine.currentModelName.substringBefore(".gguf").take(14)}"
-        } else {
-            "No Model (Tap to Select)"
-        }
-        binding.tvKnowledgeCountBadge.text = "${entries.size} Docs • Vector Store: $modelTag"
-    }
-
-    private fun reindexKnowledgeVectors() {
-        if (!aiEngine.isInitialized) {
-            showModelRequiredDialog(ModelRole.EMBEDDING)
-            return
-        }
-
-        lifecycleScope.launch {
-            val allEntries = dbHelper.getAllKnowledge()
-            val pairs = allEntries.map { it.id.toString() to "${it.title}. ${it.summary}. ${it.content}" }
-
-            Toast.makeText(this@MainActivity, "Indexing ${pairs.size} docs into vector store...", Toast.LENGTH_SHORT).show()
-            binding.tvKnowledgeCountBadge.text = "Indexing vectors..."
-
-            val count = aiEngine.indexKnowledgeEntries(pairs)
-            for (entry in allEntries) {
-                dbHelper.markKnowledgeEmbedded(entry.id)
-            }
-            binding.tvKnowledgeCountBadge.text = "$count Vectors Active in On-Device DB"
-            Toast.makeText(this@MainActivity, "Successfully indexed $count entries into vector database!", Toast.LENGTH_SHORT).show()
-            loadKnowledgeEntries()
-        }
-    }
-
-    private fun queryKnowledgeWithRag(entry: KnowledgeEntry) {
-        val ragPrompt = "Explain and summarize the technical implementation of: ${entry.title}\nContext: ${entry.content}"
-        binding.etBuddyInput.setText(ragPrompt)
-        binding.etBuddyInput.setSelection(ragPrompt.length)
-        switchTab(Tab.CHAT)
-        sendChatMessage()
-    }
-
-    private fun deleteKnowledgeEntry(entry: KnowledgeEntry) {
-        dbHelper.deleteKnowledge(entry.id)
-        loadKnowledgeEntries()
-        Toast.makeText(this, "Deleted: ${entry.title}", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun showNewKnowledgeDialog() {
-        val dialog = Dialog(this)
-        dialog.setContentView(R.layout.dialog_new_knowledge)
-        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        val etTitle = dialog.findViewById<EditText>(R.id.etNewKnowledgeTitle)
-        val etSummary = dialog.findViewById<EditText>(R.id.etNewKnowledgeSummary)
-        val etContent = dialog.findViewById<EditText>(R.id.etNewKnowledgeContent)
-        val btnClose = dialog.findViewById<ImageView>(R.id.btnDialogClose)
-        val btnCancel = dialog.findViewById<Button>(R.id.btnCancelKnowledge)
-        val btnSave = dialog.findViewById<Button>(R.id.btnSaveKnowledge)
-
-        var selectedCategory = "Hardware"
-        val catViews = listOf(
-            Pair(dialog.findViewById<TextView>(R.id.catOptHardware), "Hardware"),
-            Pair(dialog.findViewById<TextView>(R.id.catOptInference), "Inference"),
-            Pair(dialog.findViewById<TextView>(R.id.catOptNpu), "NPU"),
-            Pair(dialog.findViewById<TextView>(R.id.catOptAgents), "Agents"),
-            Pair(dialog.findViewById<TextView>(R.id.catOptRAG), "RAG"),
-            Pair(dialog.findViewById<TextView>(R.id.catOptCloud), "Cloud")
-        )
-
-        for ((v, cat) in catViews) {
-            v.setOnClickListener {
-                selectedCategory = cat
-                for ((view, c) in catViews) {
-                    if (c == cat) {
-                        view.setBackgroundResource(R.drawable.bg_card_boxy_gold)
-                        view.setTextColor(ContextCompat.getColor(this, R.color.google_yellow))
-                    } else {
-                        view.setBackgroundResource(R.drawable.bg_tag_boxy)
-                        view.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-                    }
-                }
-            }
-        }
-
-        btnClose.setOnClickListener { dialog.dismiss() }
-        btnCancel.setOnClickListener { dialog.dismiss() }
-
-        btnSave.setOnClickListener {
-            val title = etTitle.text.toString().trim()
-            val summary = etSummary.text.toString().trim()
-            val content = etContent.text.toString().trim()
-
-            if (title.isEmpty() || content.isEmpty()) {
-                Toast.makeText(this, "Title and Content are required.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-            val newEntry = KnowledgeEntry(
-                title = title,
-                category = selectedCategory,
-                summary = if (summary.isNotEmpty()) summary else title,
-                content = content,
-                timestamp = dateFormat.format(Date()),
-                isEmbedded = false
-            )
-
-            val id = dbHelper.insertKnowledge(newEntry)
-            dialog.dismiss()
-            loadKnowledgeEntries()
-            Toast.makeText(this, "Vector Doc #$id added to database!", Toast.LENGTH_SHORT).show()
-        }
-
-        dialog.show()
-    }
-
-    // ==========================================
-    // 5. HARDWARE & NPU DIAGNOSTICS VIEW
+    // 4. HARDWARE & NPU DIAGNOSTICS VIEW
     // ==========================================
     private fun setupHardware() {
         binding.btnRefreshDiagnostics.setOnClickListener {
@@ -1316,15 +1435,12 @@ class MainActivity : AppCompatActivity() {
 
             // Update Tab status badges
             binding.layoutChatModelPrompt.visibility = if (role == ModelRole.CHAT || role == ModelRole.VISUAL) View.GONE else View.VISIBLE
-            binding.tvLensModelBadge.text = "${role.icon} $shortName"
-            binding.tvAudioModelStatus.text = if (role == ModelRole.AUDIO) "🎙️ Active: $shortName" else "🎙️ Tap to load Whisper GGUF"
-            loadKnowledgeEntries()
+            binding.tvLensModelBadge.text = "📷 Google Lens • Offline OCR"
         } else {
             binding.tvModelSubtitle.text = "• Select Model"
             updateEngineStatus("Select Model", R.color.status_loading)
             binding.layoutChatModelPrompt.visibility = View.VISIBLE
-            binding.tvLensModelBadge.text = "👁️ ML Kit OCR"
-            binding.tvAudioModelStatus.text = "🎙️ Tap to select Whisper GGUF"
+            binding.tvLensModelBadge.text = "📷 Google Lens • Offline OCR"
         }
     }
 
@@ -1354,7 +1470,13 @@ class MainActivity : AppCompatActivity() {
         } else if (existingProjector != null) {
             showVisionProjectorDetectedState(existingProjector)
         } else {
-            showModelMissingState()
+            // Auto-detect and import if models are available in /data/local/tmp
+            val tmpModel = File("/data/local/tmp", ModelFileManager.DEFAULT_SMOLLM_360M)
+            if (tmpModel.exists() && tmpModel.canRead()) {
+                scanLocalTmp()
+            } else {
+                showModelMissingState()
+            }
         }
     }
 
@@ -1427,8 +1549,6 @@ class MainActivity : AppCompatActivity() {
         val chipAll = dialog.findViewById<TextView>(R.id.chipModelAll)
         val chipChat = dialog.findViewById<TextView>(R.id.chipModelChat)
         val chipVisual = dialog.findViewById<TextView>(R.id.chipModelVisual)
-        val chipAudio = dialog.findViewById<TextView>(R.id.chipModelAudio)
-        val chipDb = dialog.findViewById<TextView>(R.id.chipModelDb)
 
         var activeFilter: ModelRole? = initialFilterRole
 
@@ -1537,9 +1657,13 @@ class MainActivity : AppCompatActivity() {
 
                     itemLayout.setOnClickListener {
                         dialog.dismiss()
-                        if (isProjector) {
-                            Toast.makeText(this@MainActivity, "👁️ '${file.name}' attached as active Vision Projector adapter.", Toast.LENGTH_LONG).show()
-                            binding.tvLensModelBadge.text = "👁️ mmproj Attached"
+                        if (isProjector || role == ModelRole.VISUAL) {
+                            binding.tvLensModelBadge.text = "📷 Offline ML Kit OCR + Gemini Vision"
+                            Toast.makeText(
+                                this@MainActivity,
+                                "👁️ Visual pipeline uses bundled Offline ML Kit OCR + Cloud Gemini Vision.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         } else {
                             initializeEngineWithModel(file)
                         }
@@ -1554,19 +1678,15 @@ class MainActivity : AppCompatActivity() {
             val chips = listOf(
                 Pair(chipAll, null),
                 Pair(chipChat, ModelRole.CHAT),
-                Pair(chipVisual, ModelRole.VISUAL),
-                Pair(chipAudio, ModelRole.AUDIO),
-                Pair(chipDb, ModelRole.EMBEDDING)
+                Pair(chipVisual, ModelRole.VISUAL)
             )
             for ((chip, role) in chips) {
                 if (chip == null) continue
                 val isSelected = (activeFilter == role)
                 if (isSelected) {
                     val (bgRes, colorRes) = when (role) {
-                        ModelRole.CHAT, null -> Pair(R.drawable.bg_tab_pill_blue, R.color.google_blue)
                         ModelRole.VISUAL -> Pair(R.drawable.bg_tab_pill_red, R.color.google_red)
-                        ModelRole.AUDIO -> Pair(R.drawable.bg_tab_pill_green, R.color.google_green)
-                        ModelRole.EMBEDDING -> Pair(R.drawable.bg_tab_pill_yellow, R.color.google_yellow)
+                        else -> Pair(R.drawable.bg_tab_pill_blue, R.color.google_blue)
                     }
                     chip.setBackgroundResource(bgRes)
                     chip.setTextColor(ContextCompat.getColor(this, colorRes))
@@ -1581,8 +1701,6 @@ class MainActivity : AppCompatActivity() {
         chipAll?.setOnClickListener { activeFilter = null; updateChips() }
         chipChat?.setOnClickListener { activeFilter = ModelRole.CHAT; updateChips() }
         chipVisual?.setOnClickListener { activeFilter = ModelRole.VISUAL; updateChips() }
-        chipAudio?.setOnClickListener { activeFilter = ModelRole.AUDIO; updateChips() }
-        chipDb?.setOnClickListener { activeFilter = ModelRole.EMBEDDING; updateChips() }
 
         btnScanTmp?.setOnClickListener {
             dialog.dismiss()
@@ -1598,31 +1716,12 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun showModelRequiredDialog(targetRole: ModelRole) {
-        val (roleTitle, roleMsg) = when (targetRole) {
-            ModelRole.CHAT -> Pair(
-                "💬 Chat Model Needed",
-                "Offline chat and reasoning requires an on-device language model (e.g. SmolLM2, Qwen2.5, Gemma-2).\n\nWould you like to select a chat model?"
-            )
-            ModelRole.VISUAL -> Pair(
-                "👁️ Vision Model Needed",
-                "Visual AI reasoning requires a Vision-Language Model (SmolVLM, GLM-OCR) or Chat model to analyze images.\n\nWould you like to select a model?"
-            )
-            ModelRole.AUDIO -> Pair(
-                "🎙️ Audio Model Needed",
-                "Offline speech-to-text requires a Whisper ASR model (e.g. whisper-base.en-Q8_0.gguf).\n\nWould you like to select a Whisper model?"
-            )
-            ModelRole.EMBEDDING -> Pair(
-                "🗄️ Embedding Model Needed",
-                "Vector indexing and semantic search requires an Embedding model (all-minilm-l6-v2, bge-small) or active language model to compute embeddings.\n\nWould you like to select an embedding model?"
-            )
-        }
-
+    private fun showModelRequiredDialog(targetRole: ModelRole = ModelRole.CHAT) {
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle(roleTitle)
-            .setMessage(roleMsg)
+            .setTitle("💬 AI Model Needed")
+            .setMessage("On-device AI reasoning requires a loaded local language model (e.g. SmolLM2, Qwen2.5, Gemma-2).\n\nWould you like to select a model?")
             .setPositiveButton("Select Model") { _, _ ->
-                showModelSelectionDialog(targetRole)
+                showModelSelectionDialog(ModelRole.CHAT)
             }
             .setNegativeButton("Cancel", null)
             .show()

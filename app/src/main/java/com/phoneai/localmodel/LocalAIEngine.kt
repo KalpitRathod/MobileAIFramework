@@ -14,6 +14,9 @@ import com.mobileai.framework.vector.VectorRecord
 import com.mobileai.framework.vector.VectorStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -53,6 +56,9 @@ class LocalAIEngine(private val context: Context) {
     fun evaluateMemoryBudget(modelFile: File): MemoryBudgetPlan = mobileAI.evaluateMemoryBudget(modelFile)
     fun getNpuCapabilities(): NpuCapabilityReport = mobileAI.getNpuCapabilities()
 
+    // Native llama.cpp contexts are NOT re-entrant — serialize all inference/init calls to prevent SIGSEGV!
+    private val inferenceMutex = Mutex()
+
     // ── Model Loading ─────────────────────────────────────────────────────────
 
     suspend fun initializeEngine(
@@ -61,21 +67,23 @@ class LocalAIEngine(private val context: Context) {
         temperature: Float = 0.7f,
         threads: Int? = null
     ): Result<String> = withContext(Dispatchers.IO) {
-        val file = File(modelPath)
-        if (!file.exists()) return@withContext Result.failure(IllegalArgumentException("Model not found: $modelPath"))
+        inferenceMutex.withLock {
+            val file = File(modelPath)
+            if (!file.exists()) return@withContext Result.failure(IllegalArgumentException("Model not found: $modelPath"))
 
-        currentModelName = file.name
+            currentModelName = file.name
 
-        val budget = mobileAI.evaluateMemoryBudget(file)
-        val options = InferenceOptions(
-            maxTokens = maxTokens,
-            contextSize = budget.recommendedContextSize,
-            temperature = temperature,
-            customThreads = threads,
-            useBigCoresOnly = true,
-            enableThermalAdaptiveScaling = true
-        )
-        return@withContext mobileAI.initializeModel(file.absolutePath, options)
+            val budget = mobileAI.evaluateMemoryBudget(file)
+            val options = InferenceOptions(
+                maxTokens = maxTokens,
+                contextSize = budget.recommendedContextSize,
+                temperature = temperature,
+                customThreads = threads,
+                useBigCoresOnly = true,
+                enableThermalAdaptiveScaling = true
+            )
+            return@withContext mobileAI.initializeModel(file.absolutePath, options)
+        }
     }
 
     // ── Text Generation ───────────────────────────────────────────────────────
@@ -90,30 +98,35 @@ class LocalAIEngine(private val context: Context) {
         systemPrompt: String = "You are Mobile AI, an ultra-fast on-device AI assistant running natively on mobile hardware. Provide concise, mathematically and technically rigorous responses."
     ): Pair<String, String> = withContext(Dispatchers.Default) {
         if (!isInitialized) return@withContext Pair("Engine not initialized. Please load a model first.", "Error: Not ready")
-        try {
-            val options = InferenceOptions(maxTokens = maxTokens, systemPrompt = systemPrompt)
-            val chunk = mobileAI.generate(prompt, options)
-            val label = if (currentModelName.contains("gemma", true)) "Gemma-2 2B" else "SmolLM2"
-            Pair(chunk.text, "$label • ${chunk.telemetrySummary}")
-        } catch (e: Exception) {
-            Pair("Inference failed: ${e.localizedMessage ?: e.message}", "Error")
+        inferenceMutex.withLock {
+            try {
+                val options = InferenceOptions(maxTokens = maxTokens, systemPrompt = systemPrompt)
+                val chunk = mobileAI.generate(prompt, options)
+                val label = if (currentModelName.contains("gemma", true)) "Gemma-2 2B" else "SmolLM2"
+                Pair(chunk.text, "$label • ${chunk.telemetrySummary}")
+            } catch (e: Exception) {
+                Pair("Inference failed: ${e.localizedMessage ?: e.message}", "Error")
+            }
         }
     }
 
     // ── Real-time Streaming ───────────────────────────────────────────────────
 
     /**
-     * Returns a cold Flow<GenerationChunk> that emits token-by-token during inference.
-     * Each chunk carries the FULL accumulated text so far + live tok/s telemetry.
-     * The last chunk has isFinished=true and a complete telemetrySummary.
+     * Returns a cold Flow<GenerationChunk> serialized by inferenceMutex so rapid/concurrent
+     * requests NEVER crash native llama.cpp with SIGSEGV.
      */
     fun generateStream(
         prompt: String,
         maxTokens: Int = 1024,
         systemPrompt: String = "You are Mobile AI, an ultra-fast on-device AI assistant running natively on mobile hardware. Provide concise, mathematically and technically rigorous responses."
-    ): Flow<GenerationChunk> {
+    ): Flow<GenerationChunk> = flow {
         val options = InferenceOptions(maxTokens = maxTokens, systemPrompt = systemPrompt)
-        return mobileAI.generateStream(prompt, options)
+        inferenceMutex.withLock {
+            mobileAI.generateStream(prompt, options).collect { chunk ->
+                emit(chunk)
+            }
+        }
     }
 
     // ── Analysis & Technical Assistance ────────────────────────────────────────

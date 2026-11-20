@@ -51,6 +51,7 @@ class AudioInputManager(private val context: Context) {
         fun onPartialTranscript(partialText: String)
         fun onFinalTranscript(text: String)
         fun onError(error: String)
+        fun onRmsChanged(normalizedRms: Float) {}
     }
 
     /**
@@ -173,7 +174,11 @@ class AudioInputManager(private val context: Context) {
                     setRecognitionListener(object : RecognitionListener {
                         override fun onReadyForSpeech(params: Bundle?) {}
                         override fun onBeginningOfSpeech() {}
-                        override fun onRmsChanged(rmsdB: Float) {}
+                        override fun onRmsChanged(rmsdB: Float) {
+                            // Map Android SpeechRecognizer dB (-2..10 dB typical) to 0.0..1.0 waveform
+                            val norm = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
+                            listener.onRmsChanged(norm)
+                        }
                         override fun onBufferReceived(buffer: ByteArray?) {}
                         override fun onEndOfSpeech() {}
                         override fun onError(error: Int) {

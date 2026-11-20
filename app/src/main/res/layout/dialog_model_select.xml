@@ -74,39 +74,11 @@
                 android:id="@+id/chipModelVisual"
                 android:layout_width="wrap_content"
                 android:layout_height="32dp"
-                android:layout_marginEnd="6dp"
                 android:background="@drawable/bg_pill_outlined"
                 android:gravity="center"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:text="👁️ Visual"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/chipModelAudio"
-                android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/bg_pill_outlined"
-                android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="🎙️ Audio"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/chipModelDb"
-                android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:background="@drawable/bg_pill_outlined"
-                android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="🗄️ Database"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -136,26 +108,42 @@
         android:layout_marginTop="14dp"
         android:orientation="horizontal">
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnScanTmpDialog"
             android:layout_width="0dp"
-            android:layout_height="42dp"
+            android:layout_height="44dp"
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:background="@drawable/bg_pill_outlined"
+            android:gravity="center"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingStart="10dp"
+            android:paddingTop="0dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="0dp"
+            android:stateListAnimator="@null"
             android:text="Scan /data/local/tmp"
             android:textAllCaps="false"
             android:textColor="@color/google_blue"
             android:textSize="12sp"
             android:textStyle="bold" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnImportNewModel"
             android:layout_width="0dp"
-            android:layout_height="42dp"
+            android:layout_height="44dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:background="@drawable/bg_button_royal"
+            android:gravity="center"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingStart="10dp"
+            android:paddingTop="0dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="0dp"
+            android:stateListAnimator="@null"
             android:text="+ Select File"
             android:textAllCaps="false"
             android:textColor="@color/white"

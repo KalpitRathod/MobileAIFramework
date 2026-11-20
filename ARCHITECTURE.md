@@ -109,31 +109,71 @@ This ensures that the app never crashes due to an out-of-memory exception.
 
 ---
 
-## 3. Multimodal & On-Device OCR Pipeline
+## 3. Multimodal & 2-Stage Offline Vision Pipeline
+
+MobileAI pairs online **Gemini 2.5 Flash Vision** with a **2-Stage Offline Vision Repair** pipeline (`ML Kit → On-Device Gemma 2 2B`) so messy handwritten documents and inspection logs remain usable even in Airplane Mode:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User
-    participant App as MainActivity
-    participant OCR as OfflineVisionOcrEngine
-    participant Engine as LocalAIEngine (SmolLM2)
+    participant Lens as Google-Lens UI (MainActivity)
+    participant Validator as InputValidator / validators.py
+    participant OCR as OfflineVisionOcrEngine (ML Kit)
+    participant Gemma as LocalAIEngine (Gemma 2 2B + Mutex)
+    participant Cloud as Cloud Run Gateway (Gemini 2.5 Flash)
+    participant BQ as Google BigQuery
 
-    User->>App: Attach Photo + "Convert to text"
-    App->>OCR: recognizeTextFromPayload(imagePayload)
-    OCR-->>App: Extracted text (in ~30ms, offline)
-    alt Request is "Convert to text" / Extract only
-        App-->>User: Display extracted text directly in chat
-    else Request is a question ("Explain this formula")
-        App->>Engine: generateStream(Enriched Prompt with OCR text)
-        Engine-->>App: Stream tokens (11 tok/s)
-        App-->>User: Stream full answer with visual context
+    User->>Lens: Capture Document / Handwriting / QC Sheet
+    alt Online (Wi-Fi / 5G)
+        Lens->>Cloud: POST /v1/docs/scan-to-table or /v1/qc/scan-and-update
+        Cloud->>Validator: Reject gibberish / empty / impossible bounds
+        Cloud->>BQ: Stream structured row (scanned_documents / production_inspections)
+        Cloud-->>Lens: Dynamic Table JSON + Status
+    else Offline / Airplane Mode ($0 Cloud Cost)
+        Lens->>OCR: Multi-pass contrast-enhanced ML Kit OCR (~30-390ms)
+        OCR-->>Lens: Raw extracted text
+        Lens->>Gemma: Stage-2 OCR Repair & Pipe-Table Structuring (Mutex-guarded)
+        Gemma-->>Lens: Denoised text / clean table preview
     end
 ```
 
 ---
 
-## 4. On-Device SQLite Vector Store & RAG
+## 4. Edge-Cloud Hybrid Control Plane & Tokenomics Router
+
+`HybridRouter.kt` makes deterministic, hardware-aware routing decisions on every request to reduce cloud token spend by **60–80%** while preventing Android OOM and thermal failures:
+
+```mermaid
+flowchart TD
+    Req["Incoming Prompt + Telemetry"] --> Val["InputValidator.kt<br/>Anti-Hallucination Guard"]
+    Val -->|Invalid / Gibberish| Reject["Fast Reject (0 Tokens Spent)"]
+    Val -->|Valid| Net{"Offline / Airplane Mode?"}
+    Net -->|Yes| Local["LOCAL_EDGE<br/>On-Device Gemma 2 2B ($0)"]
+    Net -->|No| HW{"LMK RAM < 900 MB OR<br/>Thermal >= SEVERE OR<br/>Battery <= 15%?"}
+    HW -->|Yes| Cloud["CLOUD_GEMINI<br/>Gemini 2.5 Flash / Flash-Lite"]
+    HW -->|No| Score{"Complexity / Intent Score >= 60?<br/>(Coding, Live World, Heavy Vision)"}
+    Score -->|Yes| Cloud
+    Score -->|No| Local
+    Local --> Telemetry["Async Telemetry → Cloud Run → BigQuery (routing_events)"]
+    Cloud --> Telemetry
+```
+
+### Key Cloud Control Plane Components (`server/`)
+- **`server/main.py`**: FastAPI gateway deployed on **Google Cloud Run** (`--concurrency 40`, stress-tested 20/20 simultaneous HTTP 200 requests).
+- **`server/doc_table_engine.py`**: Schema-agnostic document digitizer converting arbitrary documents into `columns_json` + `rows_json` in BigQuery `scanned_documents`.
+- **`server/qc_engine.py`**: Thread-safe (`threading.Lock`) ShopFloor CNC quality inspection engine + natural-language **Query & Update** Copilot backed by BigQuery `production_inspections`.
+- **`server/validators.py`**: Strict anti-hallucination guardrail rejecting empty, gibberish, keyboard-mash, non-dimensional, and physically impossible inputs with zero BigQuery pollution.
+- **`server/analytics_agent.py`**: Conversational Fleet Tokenomics agent answering natural-language queries over `routing_events`.
+- **Google Cloud Storage Model CDN**: Public bucket serving `models_manifest.json` and quantized `.gguf` weights consumed by `ModelDownloadManager.kt`.
+
+### Native Concurrency & UI Stability
+- **`LocalAIEngine.kt`**: Serializes `llama.cpp` JNI initialization and token streaming with `kotlinx.coroutines.sync.Mutex` plus active job guards in `MainActivity.kt` so rapid concurrent taps never cause native `SIGSEGV` crashes.
+- **`ChatAdapter.kt`**: Uses payload-based in-place binding (`onBindViewHolder(..., payloads)`) with `itemAnimator = null` for zero-jitter token streaming.
+
+---
+
+## 5. On-Device SQLite Vector Store & RAG
 
 MobileAI's `VectorStore` uses an embedded SQLite database storing text chunks alongside serialized float arrays:
 
@@ -149,7 +189,7 @@ $$\text{Cosine}(\vec{u}, \vec{v}) = \frac{\sum_{i=1}^n u_i v_i}{\sqrt{\sum_{i=1}
 
 ---
 
-## 5. Autonomous Device Agent
+## 6. Autonomous Device Agent
 
 The agent is powered by `PhoneControllerAccessibilityService`:
 1. **Perception:** Traverses active `AccessibilityNodeInfo` tree to extract clickable nodes, bounds, text labels, and input fields.

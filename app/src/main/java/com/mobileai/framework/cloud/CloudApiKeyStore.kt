@@ -41,7 +41,10 @@ class CloudApiKeyStore(context: Context) {
     }
 
     fun getApiKey(provider: CloudProvider): String {
-        return prefs.getString(KEY_PREFIX_API_KEY + provider.name, "") ?: ""
+        val stored = prefs.getString(KEY_PREFIX_API_KEY + provider.name, "") ?: ""
+        if (stored.isNotBlank()) return stored
+        // Injected at build time from gitignored local.properties or GEMINI_API_KEY env var
+        return if (provider == CloudProvider.GEMINI) com.phoneai.localmodel.BuildConfig.GEMINI_API_KEY else ""
     }
 
     fun setApiKey(provider: CloudProvider, key: String) {
@@ -49,7 +52,12 @@ class CloudApiKeyStore(context: Context) {
     }
 
     fun getModelName(provider: CloudProvider): String {
-        return prefs.getString(KEY_PREFIX_MODEL + provider.name, provider.defaultModel) ?: provider.defaultModel
+        val stored = prefs.getString(KEY_PREFIX_MODEL + provider.name, provider.defaultModel) ?: provider.defaultModel
+        // Auto-migrate deprecated Gemini model names that return HTTP 404 on newer API keys
+        if (provider == CloudProvider.GEMINI && (stored == "gemini-2.0-flash" || stored == "gemini-1.5-flash" || stored.isBlank())) {
+            return "gemini-flash-lite-latest"
+        }
+        return stored
     }
 
     fun setModelName(provider: CloudProvider, modelName: String) {

@@ -62,6 +62,17 @@ class MobileAI private constructor(
     val cloudApiKeyStore: CloudApiKeyStore by lazy { CloudApiKeyStore(context) }
     val deviceAgent: DeviceAgent by lazy { DeviceAgent(context, cloudClient) }
 
+    /** Net-New Hybrid Control Plane: Router, Agent Skills, OTA CDN & Gemini Live */
+    val skillLoader: com.mobileai.framework.agent.skills.SkillLoader by lazy { com.mobileai.framework.agent.skills.SkillLoader(context) }
+    val hybridRouter: com.mobileai.framework.router.HybridRouter by lazy { com.mobileai.framework.router.HybridRouter(context, thermalGovernor) }
+    val modelDownloadManager: com.mobileai.framework.core.ModelDownloadManager by lazy { com.mobileai.framework.core.ModelDownloadManager(context) }
+    val geminiLiveClient: com.mobileai.framework.cloud.GeminiLiveClient by lazy {
+        com.mobileai.framework.cloud.GeminiLiveClient(
+            cloudApiKeyStore.getApiKey(com.mobileai.framework.cloud.CloudProvider.GEMINI),
+            skillLoader
+        )
+    }
+
     val isReady: Boolean get() = activeBackend?.isInitialized == true
     val activeModelPath: String? get() = activeBackend?.currentModelPath
 

@@ -1,0 +1,34 @@
+{
+    "models":  [
+                   {
+                       "id":  "smollm2-360m-q4",
+                       "size_mb":  258,
+                       "role":  "CHAT",
+                       "quant":  "Q4_K_M",
+                       "filename":  "smollm2-360m-instruct-q4_k_m.gguf",
+                       "min_ram_gb":  4,
+                       "engine":  "llama.cpp"
+                   },
+                   {
+                       "id":  "gemma-2-2b-it-q4",
+                       "size_mb":  1630,
+                       "role":  "CHAT",
+                       "quant":  "Q4_K_M",
+                       "filename":  "gemma-2-2b-it-q4_k_m.gguf",
+                       "min_ram_gb":  6,
+                       "engine":  "llama.cpp/LiteRT"
+                   },
+                   {
+                       "id":  "all-minilm-l6-v2",
+                       "size_mb":  20,
+                       "role":  "EMBEDDING",
+                       "quant":  "Q4_K_M",
+                       "filename":  "all-minilm-l6-v2-q4_k_m.gguf",
+                       "min_ram_gb":  4,
+                       "engine":  "llama.cpp"
+                   }
+               ],
+    "updated_at":  "2026-11-20T09:40:49.4475866Z",
+    "cdn_base":  "https://storage.googleapis.com/mobileai-models-cdn-646100637693",
+    "version":  "2.0.0"
+}

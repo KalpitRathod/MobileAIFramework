@@ -60,8 +60,24 @@ class CloudAiClient {
         val accumulated = StringBuilder()
 
         try {
-            val request = buildStreamRequest(prompt, multimodalContext, config)
-            val response = httpClient.newCall(request).execute()
+            val effectiveConfig = if (config.provider == CloudProvider.GEMINI &&
+                (multimodalContext?.cameraImage != null || multimodalContext?.screenCapture != null)
+            ) {
+                config.copy(modelName = "gemini-2.5-flash")
+            } else {
+                config
+            }
+
+            var request = buildStreamRequest(prompt, multimodalContext, effectiveConfig)
+            var response = httpClient.newCall(request).execute()
+
+            // Automatic Gemini model fallback (gemini-2.5-flash <-> gemini-flash-lite-latest) on 404/429/503
+            if (!response.isSuccessful && config.provider == CloudProvider.GEMINI) {
+                response.close()
+                val fallbackModel = if (effectiveConfig.modelName == "gemini-2.5-flash") "gemini-flash-lite-latest" else "gemini-2.5-flash"
+                request = buildStreamRequest(prompt, multimodalContext, effectiveConfig.copy(modelName = fallbackModel))
+                response = httpClient.newCall(request).execute()
+            }
 
             if (!response.isSuccessful) {
                 val errorBody = response.body?.string() ?: "HTTP ${response.code}"
@@ -162,6 +178,62 @@ class CloudAiClient {
         }
     }
 
+    /**
+     * High-accuracy Gemini Vision OCR for messy/dirty/cursive handwriting AND clean printed text.
+     * Tries gemini-2.5-flash first (strongest vision/handwriting accuracy), falling back to gemini-flash-lite-latest.
+     */
+    suspend fun transcribeImageText(
+        imagePayload: com.mobileai.framework.multimodal.ImagePayload,
+        config: CloudAiConfig
+    ): Result<String> = withContext(Dispatchers.IO) {
+        if (config.apiKey.isBlank()) {
+            return@withContext Result.failure(IllegalStateException("Gemini API key missing"))
+        }
+
+        val ocrPrompt = """
+            You are an expert forensic OCR and handwriting transcription engine.
+            Carefully read and transcribe ALL text in this image verbatim — including messy, dirty, cursive, slanted, faint, or crossed-out handwritten notes as well as clean printed text, numbers, equations, and engineering symbols (±, Ø, mm, °, /).
+            Rules:
+            - Preserve line breaks, bullet points, and tables cleanly.
+            - Fix only obvious visual fragmentation, never paraphrase or summarize.
+            - Never invent or hallucinate text that is not visible.
+            - If the image genuinely contains no readable text at all, respond with exactly: NO_TEXT_FOUND
+        """.trimIndent()
+
+        val modelsToTry = listOf("gemini-2.5-flash", "gemini-flash-lite-latest", config.modelName).distinct()
+        var lastError = "Vision OCR unavailable"
+
+        for (modelName in modelsToTry) {
+            try {
+                val modelConfig = config.copy(
+                    provider = CloudProvider.GEMINI,
+                    modelName = modelName,
+                    temperature = 0.1f,
+                    maxTokens = 2048
+                )
+                val ctx = MultimodalContext(cameraImage = imagePayload)
+                val request = buildGeminiRequest(ocrPrompt, ctx, modelConfig, stream = false)
+                val response = httpClient.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val bodyStr = response.body?.string() ?: ""
+                    response.close()
+                    val parsed = parseSyncResponse(bodyStr, CloudProvider.GEMINI).trim()
+                    if (parsed.isNotBlank() && !parsed.startsWith("Error parsing")) {
+                        return@withContext Result.success(parsed)
+                    }
+                } else {
+                    lastError = "HTTP ${response.code}"
+                    response.close()
+                }
+            } catch (e: Exception) {
+                lastError = e.message ?: "Network error"
+                Log.w(TAG, "Gemini Vision OCR attempt on $modelName failed: $lastError")
+            }
+        }
+
+        Result.failure(Exception(lastError))
+    }
+
     private fun buildStreamRequest(
         prompt: String,
         context: MultimodalContext?,
@@ -194,7 +266,7 @@ class CloudAiClient {
         config: CloudAiConfig,
         stream: Boolean
     ): Request {
-        val action = if (stream) "streamGenerateContent?alt=sse&key=${config.apiKey}" else "generateContent?key=${config.apiKey}"
+        val action = if (stream) "streamGenerateContent?alt=sse" else "generateContent"
         val baseUrl = config.baseUrl.trimEnd('/')
         val url = "$baseUrl/v1beta/models/${config.modelName}:$action"
 
@@ -243,7 +315,11 @@ class CloudAiClient {
         root.put("generationConfig", generationConfig)
 
         val body = root.toString().toRequestBody(JSON_MEDIA_TYPE)
-        return Request.Builder().url(url).post(body).build()
+        return Request.Builder()
+            .url(url)
+            .addHeader("X-goog-api-key", config.apiKey)
+            .post(body)
+            .build()
     }
 
     // ==================== Claude Request / Response ====================

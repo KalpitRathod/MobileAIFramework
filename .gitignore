@@ -53,3 +53,11 @@ Thumbs.db
 *.pt
 *.pth
 
+# Server secrets & Python cache
+.env
+server/.env
+__pycache__/
+.pytest_cache/
+*.pyc
+
+

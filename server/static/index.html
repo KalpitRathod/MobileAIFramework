@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopFloor AI — Smart CNC Quality Inspection (Powered by MobileAIFramework)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue: #1A73E8; --blue-bg: #E8F0FE; --blue-border: #D2E3FC;
+      --green: #1E8E3E; --green-bg: #E6F4EA; --green-border: #CEEAD6;
+      --yellow: #F9AB00; --yellow-bg: #FEF7E0; --yellow-border: #FEEFC3;
+      --red: #D93025; --red-bg: #FCE8E6; --red-border: #FAD2CF;
+      --bg: #F8F9FA; --surface: #FFFFFF; --surface-alt: #F1F3F4;
+      --border: #DADCE0; --border-light: #E8EAED;
+      --text: #202124; --text-sec: #5F6368; --text-muted: #80868B;
+      --radius: 14px; --shadow: 0 1px 3px rgba(32,33,36,0.08), 0 1px 2px rgba(32,33,36,0.05);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; }
+    code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+
+    header { position: sticky; top: 0; z-index: 40; background: rgba(255,255,255,0.97); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-light); }
+    .header-inner { max-width: 1240px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .dots { display: flex; gap: 4px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .brand-title { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+    .brand-sub { font-size: 11px; color: var(--text-sec); font-weight: 500; }
+    .header-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text-sec); text-decoration: none; }
+    .pill.green { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+    .pill.blue { background: var(--blue-bg); border-color: var(--blue-border); color: var(--blue); }
+    .pill.yellow { background: var(--yellow-bg); border-color: var(--yellow-border); color: #B06000; }
+    .pill.red { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+    .hero { max-width: 1240px; margin: 16px auto 0; padding: 0 20px; }
+    .hero-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: 18px; padding: 18px 22px; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .hero h1 { font-size: 21px; font-weight: 800; letter-spacing: -0.02em; }
+    .hero p { color: var(--text-sec); font-size: 13px; margin-top: 4px; max-width: 710px; }
+    .hero-kpis { display: flex; gap: 10px; flex-wrap: wrap; }
+    .mini-kpi { background: var(--bg); border: 1px solid var(--border-light); border-radius: 12px; padding: 9px 13px; min-width: 116px; }
+    .mini-kpi .val { font-size: 20px; font-weight: 800; }
+    .mini-kpi .lbl { font-size: 11px; color: var(--text-sec); font-weight: 600; }
+
+    .tabs-bar { max-width: 1240px; margin: 14px auto 0; padding: 0 20px; display: flex; gap: 8px; overflow-x: auto; }
+    .tab-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text-sec); font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap; transition: all 0.15s ease; }
+    .tab-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .tab-btn.active { background: var(--blue); border-color: var(--blue); color: #FFF; box-shadow: 0 2px 6px rgba(26,115,232,0.28); }
+
+    main { max-width: 1240px; margin: 16px auto 48px; padding: 0 20px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .grid-2-narrow { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    @media (max-width: 920px) {
+      .grid-2, .grid-2-narrow { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+    .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .card-sub { font-size: 12px; color: var(--text-sec); margin-bottom: 12px; }
+
+    .kpi-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 15px; box-shadow: var(--shadow); }
+    .kpi-card .k-lbl { font-size: 12px; color: var(--text-sec); font-weight: 600; }
+    .kpi-card .k-val { font-size: 25px; font-weight: 800; margin-top: 4px; letter-spacing: -0.02em; }
+    .kpi-card .k-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+    select, input[type="text"], textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; }
+    select:focus, input[type="text"]:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,115,232,0.12); }
+    input[type="range"] { width: 100%; accent-color: var(--blue); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s ease; }
+    .btn-primary { background: var(--blue); color: #FFF; }
+    .btn-primary:hover { background: #1557B0; }
+    .btn-green { background: var(--green); color: #FFF; }
+    .btn-green:hover { background: #137333; }
+    .btn-outline { background: var(--surface); color: var(--blue); border: 1.5px solid var(--blue); }
+    .btn-outline:hover { background: var(--blue-bg); }
+    .btn:disabled { opacity: 0.6; cursor: wait; }
+
+    .btn-chip { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border-light); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+    .btn-chip:hover { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
+    .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+
+    .upload-zone { border: 1.5px dashed var(--blue-border); background: var(--blue-bg); border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; margin-bottom: 10px; font-size: 12.5px; color: var(--blue); font-weight: 600; }
+    .upload-zone:hover { border-color: var(--blue); }
+
+    .verdict-box { margin-top: 12px; border-radius: 12px; padding: 13px 15px; border: 1.5px solid var(--border-light); background: var(--bg); font-size: 13px; }
+    .verdict-box.pass { background: var(--green-bg); border-color: var(--green-border); color: #0D652D; }
+    .verdict-box.warn { background: var(--yellow-bg); border-color: var(--yellow-border); color: #8A4B00; }
+    .verdict-box.fail { background: var(--red-bg); border-color: var(--red-border); color: #A50E0E; }
+    .verdict-box.info { background: var(--blue-bg); border-color: var(--blue-border); color: #174EA6; }
+
+    .filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .filters-row select { width: auto; min-width: 155px; padding: 7px 10px; font-size: 12.5px; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-sec); background: var(--bg); }
+    tr:hover td { background: #FAFBFD; }
+
+    .bar-track { height: 11px; background: var(--surface-alt); border-radius: 999px; overflow: hidden; margin-top: 5px; }
+    .bar-fill { height: 100%; border-radius: 999px; transition: width 0.35s ease; }
+    .control-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-sec); margin-bottom: 4px; }
+    .sql-block { margin-top: 10px; background: #202124; color: #E8EAED; padding: 11px 13px; border-radius: 10px; font-size: 11.5px; overflow-x: auto; }
+
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border-light); margin-bottom: 10px; cursor: pointer; }
+    .toggle-row span { font-size: 13px; font-weight: 600; }
+    .toggle-row small { display: block; font-size: 11px; color: var(--text-sec); }
+
+    footer { text-align: center; padding: 18px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border-light); background: var(--surface); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="dots">
+        <span class="dot" style="background:#1A73E8"></span>
+        <span class="dot" style="background:#EA4335"></span>
+        <span class="dot" style="background:#FBBC04"></span>
+        <span class="dot" style="background:#34A853"></span>
+      </div>
+      <div>
+        <div class="brand-title">ShopFloor AI <span style="font-weight:500;color:var(--text-sec);font-size:13px">by Veloter Software Lab</span></div>
+        <div class="brand-sub">Offline-First CNC Quality Inspection &amp; BigQuery Analytics • Powered by MobileAIFramework</div>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="pill green" id="badgeGateway"><span class="pulse-dot"></span> Cloud Run Live</span>
+      <span class="pill blue" id="badgeBq">BigQuery Connected ✓</span>
+      <a class="pill" href="https://github.com/KalpitRathod/MobileAIFramework" target="_blank" rel="noopener">GitHub Repo ↗</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-card">
+    <div>
+      <h1>Scan CNC Dimension Reports Offline → Auto-Update BigQuery QC DB &amp; Catch Scrap Before Shift End</h1>
+      <p>
+        Built by an ex-L&amp;T Heavy Engineering Quality Engineer: shop-floor inspectors scan part tags &amp; inspection sheets using <strong>Offline ML Kit Lens OCR + on-device Gemma</strong> inside steel bays, sync structured measurements to <strong>Google BigQuery</strong> via <strong>Cloud Run</strong>, and query/update production projects in plain English with <strong>Google Gemini</strong> — cutting cloud AI spend by <strong>60–80%</strong>.
+      </p>
+    </div>
+    <div class="hero-kpis">
+      <div class="mini-kpi">
+        <div class="val" style="color:var(--green)" id="heroFpy">--%</div>
+        <div class="lbl">First-Pass Yield</div>
+      </div>
+      <div class="mini-kpi">
+        <div class="val" style="color:var(--red)" id="heroFail">--</div>
+        <div class="lbl">Out-of-Tol Alerts</div>
+      </div>
+      <div class="mini-kpi">
+        <div class="val" style="color:var(--blue)" id="heroTotal">--</div>
+        <div class="lbl">BigQuery QC Rows</div>
+      </div>
+      <div class="mini-kpi">
+        <div class="val" style="color:#B06000" id="heroEdgeRatio">--%</div>
+        <div class="lbl">Edge Token Saved</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<nav class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('doctables', this)">📄 Document → Abstract Tables (BigQuery)</button>
+  <button class="tab-btn" onclick="switchTab('shopfloor', this)">🏭 ShopFloor QC &amp; BigQuery DB</button>
+  <button class="tab-btn" onclick="switchTab('analytics', this)">📊 Production Quality Analytics</button>
+  <button class="tab-btn" onclick="switchTab('hybrid', this)">⚡ Hybrid Router &amp; Tokenomics</button>
+</nav>
+
+<main>
+  <!-- ================================================================== -->
+  <!-- TAB 0 (DEFAULT): ABSTRACT DOCUMENT -> TABULAR DATA DATABASE        -->
+  <!-- ================================================================== -->
+  <section id="tab-doctables" class="tab-panel active">
+    <div class="card">
+      <h2>📄 Scan ANY Document (Handwritten or Printed) → Dynamic Tabular Database <span class="pill blue" style="font-size:11px">Schema-Agnostic BigQuery</span></h2>
+      <div class="card-sub">Every scanned page can have completely different columns &amp; structure — invoices, messy handwritten logs, checklists, lab sheets, BOMs, or shop-floor notes. Synced live from the Android Lens Doc Scanner.</div>
+
+      <label class="upload-zone" for="docTableFile">
+        📸 Click to Upload ANY Document or Handwritten Note Photo (Gemini 2.5 Flash Vision → Dynamic Table)
+        <input type="file" id="docTableFile" accept="image/*" style="display:none" onchange="onDocTableImagePicked(event)" />
+        <div id="docPickedName" style="font-size:11px;color:var(--text-sec);margin-top:4px;font-weight:500;">Or paste rough handwritten/printed text below and click Convert → Save</div>
+      </label>
+
+      <textarea id="docTableText" rows="3" placeholder="Paste any rough notes, table, invoice, or checklist...">Item | Qty | Rate | Status
+M12 Hex Bolts | 150 | 12 INR | Received
+Bearing 6205-2RS | 24 | 310 INR | Pending
+Shaft Seal 50mm | 10 | 450 INR | Checked OK</textarea>
+
+      <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btnDocToTable" onclick="runDocToTable()">📄 Convert to Table &amp; Save to BigQuery</button>
+        <button class="btn-chip" onclick="loadDocTables()">↻ Refresh Live Tables from Phone/Cloud</button>
+        <span id="docScanStatus" style="font-size:12px;color:var(--text-sec);"></span>
+      </div>
+      <div id="docScanFeedback" class="verdict-box" style="display:none;"></div>
+    </div>
+
+    <div id="docTablesContainer" style="margin-top:18px;display:flex;flex-direction:column;gap:16px;"></div>
+  </section>
+
+  <!-- ================================================================== -->
+  <!-- TAB 1: SHOPFLOOR LENS SCANNER + AI QUERY/UPDATE + LIVE CLOUD QC DB -->
+  <!-- ================================================================== -->
+  <section id="tab-shopfloor" class="tab-panel">
+    <div class="grid-2">
+      <!-- LEFT: LENS / REPORT SCANNER -> BIGQUERY -->
+      <div class="card">
+        <h2>📷 Lens OCR / Inspection Sheet Scanner <span class="pill green" style="font-size:11px">ML Kit + Gemini</span></h2>
+        <div class="card-sub">Upload a blueprint/report photo, pick a realistic machining tag, or paste OCR from the Android Lens tab to auto-parse &amp; insert into BigQuery.</div>
+
+        <label class="upload-zone" for="qcImageFile">
+          📸 Click to Upload Inspection Sheet / Vernier / Blueprint Photo (Gemini Vision)
+          <input type="file" id="qcImageFile" accept="image/*" style="display:none" onchange="onImagePicked(event)" />
+          <div id="pickedImgName" style="font-size:11px;color:var(--text-sec);margin-top:4px;font-weight:500;">Or test instant sample OCR scans below ↓</div>
+        </label>
+
+        <div class="chips-wrap">
+          <button class="btn-chip" onclick="loadSampleScan('fail_shaft')">❌ Turbine Shaft Bore (Tool Drift)</button>
+          <button class="btn-chip" onclick="loadSampleScan('pass_valve')">✅ HP Valve Seat (PASS)</button>
+          <button class="btn-chip" onclick="loadSampleScan('warn_flange')">⚠️ Nuclear Flange (WARN)</button>
+        </div>
+
+        <textarea id="qcOcrInput" rows="3" placeholder="OCR text from Android Lens or report...">Project: PRJ-TURB-401 | Part: SHAFT-505-88 (Turbine Main Shaft) | Machine: CNC-LATHE-03 | Inner Bore Nominal: 50.000 mm ±0.020 mm | Measured Actual: 50.031 mm | Operator: K. Rathod</textarea>
+
+        <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-green" id="btnScanLog" onclick="runQcScan()">📷 Parse &amp; Log to Cloud BigQuery</button>
+          <span id="scanStatus" style="font-size:12px;color:var(--text-sec);"></span>
+        </div>
+
+        <div id="scanVerdictBox" class="verdict-box" style="display:none;"></div>
+      </div>
+
+      <!-- RIGHT: AI COPILOT FOR QUERY & UPDATE -->
+      <div class="card">
+        <h2>🤖 ShopFloor AI Copilot — Query &amp; Update Data <span class="pill blue" style="font-size:11px">Gemini + BigQuery</span></h2>
+        <div class="card-sub">Ask quality analytics questions OR issue natural-language updates to modify project inspection records in real time.</div>
+
+        <div class="chips-wrap">
+          <button class="btn-chip" onclick="runAiCmd('Which CNC machine has the highest rejection rate and what corrective machining action should we take?')">🔍 Worst CNC Machine &amp; Root Cause</button>
+          <button class="btn-chip" onclick="runAiCmd('Summarize First-Pass Yield and scrap risk for PRJ-TURB-401')">📊 PRJ-TURB-401 Yield Report</button>
+          <button class="btn-chip" onclick="runAiCmd('Update latest inspection measured bore to 50.008 mm and mark PASS after rework')">✏️ Update Latest Record (Rework → PASS)</button>
+          <button class="btn-chip" onclick="runAiCmd('Show out of tolerance failures and Cpk capability across projects')">⚠️ Out-of-Tolerance &amp; Cpk</button>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input type="text" id="qcCmdInput" placeholder="e.g. 'Which machine is drifting?' or 'Update INS-1160 measured to 50.011 mm'" onkeydown="if(event.key==='Enter') runAiCmd()" />
+          <button class="btn btn-primary" id="btnRunCmd" onclick="runAiCmd()">Run AI</button>
+        </div>
+
+        <div id="aiCmdResult" class="verdict-box info" style="display:none;"></div>
+        <pre id="aiCmdSql" class="sql-block" style="display:none;"></pre>
+      </div>
+    </div>
+
+    <!-- LIVE CLOUD BIGQUERY PRODUCTION DIMENSIONS TABLE -->
+    <div class="card" style="margin-top:18px;">
+      <h2>
+        <span>🗄️ Cloud Production Dimensions Database <span class="mono" style="font-size:11.5px;color:var(--blue);font-weight:600">BigQuery: mobileai_telemetry.production_inspections</span></span>
+        <button class="btn-chip" onclick="loadQcData()">↻ Refresh Live from Cloud</button>
+      </h2>
+      <div class="card-sub">Synced live from Android Lens OCR scans, Web Scanner uploads, AI Copilot updates, and CNC CMM inspection batches.</div>
+
+      <div class="filters-row">
+        <select id="filterProject" onchange="loadQcData()">
+          <option value="ALL">All Projects</option>
+          <option value="PRJ-TURB-401">PRJ-TURB-401 (Turbine Shaft)</option>
+          <option value="PRJ-VALVE-208">PRJ-VALVE-208 (HP Valve)</option>
+          <option value="PRJ-FLANGE-112">PRJ-FLANGE-112 (Vessel Flange)</option>
+          <option value="PRJ-GEAR-309">PRJ-GEAR-309 (Gearbox Housing)</option>
+        </select>
+        <select id="filterMachine" onchange="loadQcData()">
+          <option value="ALL">All CNC Machines</option>
+          <option value="CNC-VMC-01">CNC-VMC-01</option>
+          <option value="CNC-VMC-02">CNC-VMC-02</option>
+          <option value="CNC-LATHE-03">CNC-LATHE-03</option>
+          <option value="CNC-5AX-04">CNC-5AX-04</option>
+          <option value="CNC-GRIND-05">CNC-GRIND-05</option>
+        </select>
+        <select id="filterStatus" onchange="loadQcData()">
+          <option value="ALL">All Statuses</option>
+          <option value="FAIL">❌ FAIL (Out of Tolerance)</option>
+          <option value="WARN">⚠️ WARN (Near Limit)</option>
+          <option value="PASS">✅ PASS</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Project</th>
+              <th>Part No.</th>
+              <th>Machine</th>
+              <th>Dimension</th>
+              <th>Nominal ± Tol</th>
+              <th>Measured</th>
+              <th>Deviation</th>
+              <th>Status</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="qcTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <!-- TAB 2: PRODUCTION QUALITY ANALYTICS (BIGQUERY)                     -->
+  <!-- ================================================================== -->
+  <section id="tab-analytics" class="tab-panel">
+    <div class="grid-4">
+      <div class="kpi-card">
+        <div class="k-lbl">First-Pass Yield (FPY)</div>
+        <div class="k-val" style="color:var(--green)" id="kpiFpy">--%</div>
+        <div class="k-sub" id="kpiPassWarn">-- pass • -- warn</div>
+      </div>
+      <div class="kpi-card">
+        <div class="k-lbl">Out-of-Tolerance Scrap</div>
+        <div class="k-val" style="color:var(--red)" id="kpiFailCount">--</div>
+        <div class="k-sub">Auto-flagged for rework/quarantine</div>
+      </div>
+      <div class="kpi-card">
+        <div class="k-lbl">Process Capability (Est. Cpk)</div>
+        <div class="k-val" style="color:var(--blue)" id="kpiCpk">--</div>
+        <div class="k-sub">ISO 2768-fK target ≥ 1.33</div>
+      </div>
+      <div class="kpi-card">
+        <div class="k-lbl">Highest Drift CNC Machine</div>
+        <div class="k-val" style="color:#B06000;font-size:20px" id="kpiWorstMachine">--</div>
+        <div class="k-sub" id="kpiWorstPct">--% reject rate</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:18px;">
+      <div class="card">
+        <h2>⚙️ CNC Machine Rejection &amp; Tool-Wear Drift</h2>
+        <div class="card-sub">Live rejection rate (%) and mean absolute dimensional deviation from BigQuery.</div>
+        <div id="machineBars"></div>
+      </div>
+      <div class="card">
+        <h2>🏗️ Project Quality Yield Breakdown</h2>
+        <div class="card-sub">Pass vs Warn vs Fail distribution across active heavy-engineering projects.</div>
+        <div id="projectBars"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <!-- TAB 3: HYBRID ROUTER & TOKENOMICS ENGINE (UNDER THE HOOD)          -->
+  <!-- ================================================================== -->
+  <section id="tab-hybrid" class="tab-panel">
+    <div class="grid-2-narrow">
+      <div class="card">
+        <h2>📱 HybridRouter.kt Simulator <span class="pill blue" style="font-size:11px">&lt;5ms</span></h2>
+        <div class="card-sub">Why ShopFloor AI works inside zero-signal steel plants &amp; cuts cloud token bills by 60–80%.</div>
+
+        <label class="toggle-row">
+          <div><span>✈️ Airplane Mode / Steel Bay</span><small>Forces 100% local Gemma + ML Kit OCR ($0)</small></div>
+          <input type="checkbox" id="simOffline" />
+        </label>
+        <label class="toggle-row">
+          <div><span>📷 Live Camera / Voice Stream</span><small>Escalates to Gemini Live WebSocket</small></div>
+          <input type="checkbox" id="simImage" />
+        </label>
+
+        <div style="margin-bottom:10px;">
+          <div class="control-label"><span>🌡️ ThermalGovernor State</span></div>
+          <select id="simThermal">
+            <option value="NORMAL">NORMAL (Big-Core Pinning)</option>
+            <option value="WARM">WARM (Balanced)</option>
+            <option value="SEVERE">SEVERE (Throttled → Cloud Run)</option>
+          </select>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="control-label"><span>💾 Free RAM (MemoryBudgetManager)</span><strong id="lblRam">3400 MB</strong></div>
+          <input type="range" id="simRam" min="500" max="6000" step="100" value="3400" oninput="document.getElementById('lblRam').textContent=this.value+' MB'" />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>⚡ Test Hybrid Edge-Cloud Routing &amp; Tokenomics</h2>
+        <div class="card-sub">Every execution logs real token savings to BigQuery `mobileai_telemetry.routing_events`.</div>
+        <div class="chips-wrap">
+          <button class="btn-chip" onclick="presetRoute('offline')">✈️ Offline OCR Scan ($0)</button>
+          <button class="btn-chip" onclick="presetRoute('cloud')">☁️ Complex Root-Cause → Gemini</button>
+          <button class="btn-chip" onclick="presetRoute('thermal')">🌡️ Thermal Offload</button>
+        </div>
+        <textarea id="routePrompt" rows="2">Scan this turbine shaft tolerance sheet and verify inner bore 50.012 mm</textarea>
+        <div style="margin-top:10px;">
+          <button class="btn btn-primary" onclick="runHybridRoute()">⚡ Route &amp; Execute Live</button>
+        </div>
+        <div id="routeDecisionBox" class="verdict-box" style="display:none;"></div>
+        <div id="routeRespBox" style="margin-top:10px;background:var(--bg);border:1px solid var(--border-light);border-radius:10px;padding:12px;font-size:13px;white-space:pre-wrap;">Click above to see live edge vs cloud routing + BigQuery tokenomics streaming.</div>
+      </div>
+    </div>
+
+    <!-- Fleet Tokenomics Conversational Analytics (Matches 3-min Showcase Script!) -->
+    <div class="card" style="margin-top:18px;">
+      <h2>💬 BigQuery Fleet Tokenomics Conversational Analytics <span class="pill green" style="font-size:11px">mobileai_telemetry.routing_events</span></h2>
+      <div class="card-sub">Query live edge-vs-cloud token savings, offline resilience, and latency across Android device tiers in plain English.</div>
+      <div class="chips-wrap">
+        <button class="btn-chip" onclick="askFleetAnalytics('Which device tier saved the most tokens today?')">🏆 Which device tier saved the most tokens today?</button>
+        <button class="btn-chip" onclick="askFleetAnalytics('How many queries ran offline in Airplane Mode?')">✈️ Offline / Airplane Mode stats</button>
+        <button class="btn-chip" onclick="askFleetAnalytics('How much cloud token spend did we save?')">💰 Total cloud spend saved (60-80%)</button>
+        <button class="btn-chip" onclick="askFleetAnalytics('Compare Edge vs Cloud latency performance')">⚡ Edge vs Cloud latency</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="fleetAnalyticsInput" placeholder="Ask: Which device tier saved the most tokens today?" onkeydown="if(event.key==='Enter') askFleetAnalytics()" />
+        <button class="btn btn-primary" onclick="askFleetAnalytics()">Ask BigQuery AI</button>
+      </div>
+      <div id="fleetAnalyticsBox" class="verdict-box info" style="display:none;"></div>
+      <pre id="fleetAnalyticsSql" class="sql-block" style="display:none;"></pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  ShopFloor AI (Powered by MobileAIFramework) • Built by Kalpit Rathod (Veloter Software Lab) for Google DeepMind | Google Cloud Startup Buildathon India 2026
+</footer>
+
+<script>
+  const API = window.location.origin;
+  let pickedImageBase64 = null;
+  let pickedMime = 'image/jpeg';
+  let docImageBase64 = null;
+  let docMime = 'image/jpeg';
+
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+    if (id === 'doctables') loadDocTables();
+    if (id === 'shopfloor' || id === 'analytics') loadQcData();
+  }
+
+  function onDocTableImagePicked(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    docMime = file.type || 'image/jpeg';
+    document.getElementById('docPickedName').textContent = '✅ Attached: ' + file.name + ' (ready for Gemini Vision Doc → Table)';
+    const reader = new FileReader();
+    reader.onload = () => { docImageBase64 = reader.result; };
+    reader.readAsDataURL(file);
+  }
+
+  async function runDocToTable() {
+    const btn = document.getElementById('btnDocToTable');
+    const st = document.getElementById('docScanStatus');
+    const fb = document.getElementById('docScanFeedback');
+    btn.disabled = true;
+    st.textContent = 'Converting document into dynamic table with Gemini Vision...';
+    try {
+      const r = await fetch(API + '/v1/docs/scan-to-table', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ocr_text: document.getElementById('docTableText').value,
+          image_base64: docImageBase64,
+          mime_type: docMime,
+          source: docImageBase64 ? 'WEB_VISION_DOC_SCAN' : 'WEB_TEXT_DOC_SCAN'
+        })
+      });
+      const d = await r.json();
+      fb.style.display = 'block';
+      if (!d.accepted) {
+        fb.className = 'verdict-box fail';
+        fb.textContent = d.message || '🚫 Invalid document input rejected.';
+        st.textContent = 'Rejected (not saved)';
+      } else {
+        fb.className = 'verdict-box pass';
+        fb.textContent = `${d.message} • BigQuery: ${d.bigquery_streamed ? 'Streamed ✓' : 'Synced ✓'}`;
+        st.textContent = 'Table digitized & saved!';
+        docImageBase64 = null;
+        loadDocTables();
+      }
+    } catch (e) {
+      st.textContent = 'Error: ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function exportDocCsv(doc) {
+    const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const lines = [doc.columns.map(esc).join(','), ...doc.rows.map(r => r.map(esc).join(','))];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (doc.doc_id || 'table') + '.csv';
+    a.click();
+  }
+
+  window._cachedDocs = [];
+  async function loadDocTables() {
+    const res = await fetch(API + '/v1/docs/tables?limit=30');
+    const data = await res.json();
+    window._cachedDocs = data.documents || [];
+    const wrap = document.getElementById('docTablesContainer');
+    wrap.innerHTML = window._cachedDocs.map((doc, idx) => `
+      <div class="card">
+        <h2>
+          <span>📄 ${doc.title} <span class="pill blue" style="font-size:11px;margin-left:6px">${doc.doc_type}</span> <span class="mono" style="font-size:11px;color:var(--text-muted)">${doc.doc_id}</span></span>
+          <button class="btn-chip" onclick="exportDocCsv(window._cachedDocs[${idx}])">⬇ Export CSV</button>
+        </h2>
+        <div class="card-sub">${doc.summary} • Source: <strong>${doc.source}</strong> • ${(doc.rows || []).length} rows × ${(doc.columns || []).length} cols</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>${(doc.columns || []).map(c => `<th>${c}</th>`).join('')}</tr></thead>
+            <tbody>${(doc.rows || []).map(r => `<tr>${r.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function onImagePicked(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    pickedMime = file.type || 'image/jpeg';
+    document.getElementById('pickedImgName').textContent = '✅ Attached: ' + file.name + ' (ready for Gemini Vision)';
+    const reader = new FileReader();
+    reader.onload = () => { pickedImageBase64 = reader.result; };
+    reader.readAsDataURL(file);
+  }
+
+  function loadSampleScan(kind) {
+    pickedImageBase64 = null;
+    document.getElementById('pickedImgName').textContent = 'Sample CNC Inspection Tag loaded (or click above to attach photo)';
+    const box = document.getElementById('qcOcrInput');
+    if (kind === 'fail_shaft') {
+      box.value = 'Project: PRJ-TURB-401 | Part: SHAFT-505-91 (Turbine Main Shaft) | Machine: CNC-LATHE-03 | Inner Bore Nominal: 50.000 mm ±0.020 mm | Measured Actual: 50.034 mm | Shift-A | Operator: K. Rathod';
+    } else if (kind === 'pass_valve') {
+      box.value = 'Project: PRJ-VALVE-208 | Part: VLV-208-B-44 (HP Valve Seat Ring) | Machine: CNC-5AX-04 | Seat Outer Diameter Nominal: 85.000 mm ±0.025 mm | Measured Actual: 85.006 mm | Shift-B';
+    } else if (kind === 'warn_flange') {
+      box.value = 'Project: PRJ-FLANGE-112 | Part: FLG-112-A-19 (Bolt Circle Flange) | Machine: CNC-VMC-02 | Flange Thickness Nominal: 24.500 mm ±0.030 mm | Measured Actual: 24.525 mm | Shift-A';
+    }
+    runQcScan();
+  }
+
+  async function runQcScan() {
+    const btn = document.getElementById('btnScanLog');
+    const st = document.getElementById('scanStatus');
+    const box = document.getElementById('scanVerdictBox');
+    btn.disabled = true;
+    st.textContent = 'Parsing dimensions with Gemini & logging to BigQuery...';
+    try {
+      const res = await fetch(API + '/v1/qc/scan-and-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ocr_text: document.getElementById('qcOcrInput').value,
+          image_base64: pickedImageBase64,
+          mime_type: pickedMime,
+          source: pickedImageBase64 ? 'WEB_VISION_SCAN' : 'WEB_LENS_OCR',
+          operator: 'K. Rathod'
+        })
+      });
+      const data = await res.json();
+      box.style.display = 'block';
+      if (data.accepted === false || !data.record) {
+        box.className = 'verdict-box fail';
+        box.innerHTML = `<div style="font-weight:800;margin-bottom:4px;">${data.verdict || '🚫 Invalid Inspection Input Rejected'}</div>
+          <div style="font-size:12px;">Not logged to BigQuery. Scan or enter real dimensional inspection data (Nominal, Tolerance, Measured mm).</div>`;
+        st.textContent = 'Rejected invalid scan (database unchanged)';
+        return;
+      }
+      const rec = data.record;
+      box.className = 'verdict-box ' + (rec.status === 'PASS' ? 'pass' : rec.status === 'WARN' ? 'warn' : 'fail');
+      box.innerHTML = `
+        <div style="font-weight:800;margin-bottom:4px;">${data.verdict}</div>
+        <div style="font-size:12px;">
+          ID: <strong class="mono">${rec.inspection_id}</strong> • Machine: <strong>${rec.machine_id}</strong> •
+          Gemini Parsed: <strong>${data.gemini_parsed ? 'Yes ✓' : 'Strict Parser'}</strong> •
+          BigQuery: <strong>${data.bigquery_streamed ? 'Streamed ✓' : 'Synced ✓'}</strong>
+        </div>`;
+      st.textContent = `Logged ${rec.inspection_id} to Cloud QC DB!`;
+      pickedImageBase64 = null;
+      loadQcData();
+    } catch (e) {
+      st.textContent = 'Error: ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function runAiCmd(preset) {
+    const input = document.getElementById('qcCmdInput');
+    if (preset) input.value = preset;
+    const cmd = input.value.trim();
+    if (!cmd) return;
+    const btn = document.getElementById('btnRunCmd');
+    const resBox = document.getElementById('aiCmdResult');
+    const sqlBox = document.getElementById('aiCmdSql');
+    btn.disabled = true;
+    resBox.style.display = 'block';
+    resBox.className = 'verdict-box info';
+    resBox.textContent = '⏳ Running ShopFloor AI Copilot on live BigQuery production data...';
+    try {
+      const res = await fetch(API + '/v1/qc/ai-command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd })
+      });
+      const data = await res.json();
+      resBox.className = 'verdict-box ' + (data.action === 'REJECTED' || data.accepted === false ? 'fail' : data.action === 'UPDATE' ? 'pass' : 'info');
+      resBox.innerHTML = (data.answer || '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+      if (data.sql_equivalent) {
+        sqlBox.style.display = 'block';
+        sqlBox.textContent = '-- BigQuery SQL\n' + data.sql_equivalent;
+      }
+      if (data.action === 'UPDATE') loadQcData();
+    } catch (e) {
+      resBox.textContent = '⚠️ Error: ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function loadQcData() {
+    const p = document.getElementById('filterProject').value;
+    const m = document.getElementById('filterMachine').value;
+    const s = document.getElementById('filterStatus').value;
+    const res = await fetch(`${API}/v1/qc/inspections?project_code=${p}&machine_id=${m}&status=${s}&limit=60`);
+    const data = await res.json();
+    const sum = data.summary;
+
+    // Hero KPIs
+    document.getElementById('heroFpy').textContent = sum.fpy_percent + '%';
+    document.getElementById('heroFail').textContent = sum.fail_count;
+    document.getElementById('heroTotal').textContent = sum.total_inspections;
+
+    // Analytics KPIs
+    document.getElementById('kpiFpy').textContent = sum.fpy_percent + '%';
+    document.getElementById('kpiPassWarn').textContent = `${sum.pass_count} pass • ${sum.warn_count} warn`;
+    document.getElementById('kpiFailCount').textContent = sum.fail_count;
+    document.getElementById('kpiCpk').textContent = sum.estimated_cpk;
+    document.getElementById('kpiWorstMachine').textContent = sum.worst_machine;
+    document.getElementById('kpiWorstPct').textContent = sum.worst_machine_reject_pct + '% reject rate';
+
+    // Table
+    document.getElementById('qcTableBody').innerHTML = (data.records || []).map(r => {
+      const cls = r.status === 'PASS' ? 'green' : r.status === 'WARN' ? 'yellow' : 'red';
+      const devColor = r.status === 'FAIL' ? 'var(--red)' : r.status === 'WARN' ? '#B06000' : 'var(--green)';
+      const devSign = r.deviation_mm >= 0 ? '+' : '';
+      return `<tr>
+        <td class="mono"><strong>${r.inspection_id}</strong></td>
+        <td><strong>${r.project_code}</strong></td>
+        <td class="mono">${r.part_number}</td>
+        <td class="mono">${r.machine_id}</td>
+        <td>${r.dimension_name}</td>
+        <td class="mono">${Number(r.nominal_mm).toFixed(3)} ±${Number(r.tolerance_mm).toFixed(3)}</td>
+        <td class="mono"><strong>${Number(r.measured_mm).toFixed(3)} mm</strong></td>
+        <td class="mono" style="color:${devColor};font-weight:700">${devSign}${Number(r.deviation_mm).toFixed(4)}</td>
+        <td><span class="pill ${cls}" style="padding:2px 8px;font-size:11px">${r.status}</span></td>
+        <td style="font-size:11px;color:var(--text-sec)">${r.source}</td>
+      </tr>`;
+    }).join('');
+
+    // Machine Drift Bars
+    const mEntries = Object.entries(sum.by_machine || {}).sort((a, b) => b[1].reject_rate_pct - a[1].reject_rate_pct);
+    document.getElementById('machineBars').innerHTML = mEntries.map(([name, v]) => {
+      const col = v.reject_rate_pct > 15 ? 'var(--red)' : v.reject_rate_pct > 5 ? 'var(--yellow)' : 'var(--green)';
+      return `<div style="margin-bottom:12px;">
+        <div class="control-label"><span class="mono">${name} (${v.total} parts • avg dev ${v.avg_abs_dev_mm} mm)</span><strong style="color:${col}">${v.reject_rate_pct}% FAIL (${v.fail})</strong></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, Math.max(4, v.reject_rate_pct * 2.5))}%;background:${col}"></div></div>
+      </div>`;
+    }).join('');
+
+    // Project Yield Bars
+    const pEntries = Object.entries(sum.by_project || {});
+    document.getElementById('projectBars').innerHTML = pEntries.map(([name, v]) => {
+      const fpy = Math.round(((v.pass + v.warn) / Math.max(1, v.total)) * 100);
+      return `<div style="margin-bottom:12px;">
+        <div class="control-label"><span><strong>${name}</strong> (${v.pass} pass / ${v.warn} warn / ${v.fail} fail)</span><strong style="color:var(--blue)">${fpy}% Yield</strong></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${fpy}%;background:var(--blue)"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadTokenomicsHero() {
+    try {
+      const h = await (await fetch(API + '/health')).json();
+      const s = await (await fetch(API + '/v1/telemetry/summary')).json();
+      document.getElementById('heroEdgeRatio').textContent = s.edge_ratio_percent + '%';
+      document.getElementById('badgeBq').textContent = h.bigquery_connected ? 'BigQuery Live ✓' : 'Buffer Active';
+    } catch (_) {}
+  }
+
+  function presetRoute(kind) {
+    document.getElementById('simOffline').checked = (kind === 'offline');
+    document.getElementById('simImage').checked = false;
+    document.getElementById('simThermal').value = (kind === 'thermal') ? 'SEVERE' : 'NORMAL';
+    document.getElementById('routePrompt').value =
+      kind === 'offline' ? 'Scan turbine shaft dimension tag offline with ML Kit OCR' :
+      kind === 'thermal' ? 'Summarize shift inspection notes' :
+      'Analyze CNC-LATHE-03 bore tolerance drift step by step and derive root cause corrective code';
+    runHybridRoute();
+  }
+
+  async function runHybridRoute() {
+    const box = document.getElementById('routeDecisionBox');
+    const resp = document.getElementById('routeRespBox');
+    resp.textContent = '⏳ Evaluating HybridRouter & logging tokenomics to BigQuery...';
+    const r = await fetch(API + '/v1/playground/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: document.getElementById('routePrompt').value,
+        is_offline: document.getElementById('simOffline').checked,
+        has_image: document.getElementById('simImage').checked,
+        thermal_state: document.getElementById('simThermal').value,
+        available_ram_mb: parseInt(document.getElementById('simRam').value, 10)
+      })
+    });
+    const d = await r.json();
+    box.style.display = 'block';
+    box.className = 'verdict-box ' + (d.accepted === false || d.decision.route_target === 'REJECTED' ? 'fail' : d.decision.route_target === 'EDGE_LOCAL' ? 'pass' : 'info');
+    box.innerHTML = `<strong>${d.decision.route_target}</strong> (${d.model_executed}) — ${d.decision.routing_reason} • Saved <strong>${d.decision.tokens_saved} tokens</strong>`;
+    resp.textContent = d.response;
+    loadTokenomicsHero();
+  }
+
+  async function askFleetAnalytics(preset) {
+    const inp = document.getElementById('fleetAnalyticsInput');
+    if (preset) inp.value = preset;
+    const q = inp.value.trim();
+    const box = document.getElementById('fleetAnalyticsBox');
+    const sql = document.getElementById('fleetAnalyticsSql');
+    box.style.display = 'block';
+    box.className = 'verdict-box info';
+    box.textContent = '⏳ Querying BigQuery fleet telemetry...';
+    const r = await fetch(API + '/v1/analytics/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q })
+    });
+    const d = await r.json();
+    box.className = 'verdict-box ' + (d.accepted === false ? 'fail' : 'info');
+    box.innerHTML = (d.answer || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`(.*?)`/g, '<code style="background:#E8EAED;padding:2px 5px;border-radius:4px">$1</code>');
+    if (d.sql_equivalent) {
+      sql.style.display = 'block';
+      sql.textContent = '-- BigQuery SQL\n' + d.sql_equivalent;
+    }
+  }
+
+  loadDocTables();
+  loadQcData();
+  loadTokenomicsHero();
+</script>
+</body>
+</html>

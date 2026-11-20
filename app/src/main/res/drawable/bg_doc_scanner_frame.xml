@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ultra-fine Google Lens style delicate rounded white corner arcs (document proportions) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="260dp"
+    android:height="320dp"
+    android:viewportWidth="260"
+    android:viewportHeight="320">
+
+    <!-- Top-left delicate curved white arc -->
+    <path
+        android:strokeColor="#D9FFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M14,54 V42 A28,28 0 0 1 42,14 H54" />
+
+    <!-- Top-right delicate curved white arc -->
+    <path
+        android:strokeColor="#D9FFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M206,14 H218 A28,28 0 0 1 246,42 V54" />
+
+    <!-- Bottom-left delicate curved white arc -->
+    <path
+        android:strokeColor="#D9FFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M14,266 V278 A28,28 0 0 0 42,306 H54" />
+
+    <!-- Bottom-right delicate curved white arc -->
+    <path
+        android:strokeColor="#D9FFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M206,306 H218 A28,28 0 0 0 246,278 V266" />
+</vector>

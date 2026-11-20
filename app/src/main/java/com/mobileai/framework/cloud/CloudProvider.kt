@@ -12,7 +12,7 @@ enum class CloudProvider(
 ) {
     GEMINI(
         displayName = "Google Gemini",
-        defaultModel = "gemini-2.0-flash",
+        defaultModel = "gemini-flash-latest",
         defaultBaseUrl = "https://generativelanguage.googleapis.com",
         isOpenAiCompatible = false
     ),
