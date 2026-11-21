@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShopFloor AI — Smart CNC Quality Inspection (Powered by MobileAIFramework)</title>
+  <title>MobileAIFramework | ShopFloor AI & Hybrid Edge-Cloud Control Plane</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -72,7 +72,8 @@
     .kpi-card .k-val { font-size: 25px; font-weight: 800; margin-top: 4px; letter-spacing: -0.02em; }
     .kpi-card .k-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
 
-    select, input[type="text"], textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; }
+    select, input[type="text"], textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; line-height: 1.5; }
+    textarea { min-height: 112px; resize: vertical; }
     select:focus, input[type="text"]:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,115,232,0.12); }
     input[type="range"] { width: 100%; accent-color: var(--blue); }
 
@@ -89,8 +90,8 @@
     .btn-chip:hover { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
     .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 
-    .upload-zone { border: 1.5px dashed var(--blue-border); background: var(--blue-bg); border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; margin-bottom: 10px; font-size: 12.5px; color: var(--blue); font-weight: 600; }
-    .upload-zone:hover { border-color: var(--blue); }
+    .upload-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; border: 1.5px dashed var(--blue-border); background: var(--blue-bg); border-radius: 12px; padding: 16px 14px; text-align: center; cursor: pointer; margin-bottom: 12px; font-size: 13px; color: var(--blue); font-weight: 600; transition: all 0.15s ease; }
+    .upload-zone:hover { border-color: var(--blue); background: #DDE9FD; }
 
     .verdict-box { margin-top: 12px; border-radius: 12px; padding: 13px 15px; border: 1.5px solid var(--border-light); background: var(--bg); font-size: 13px; }
     .verdict-box.pass { background: var(--green-bg); border-color: var(--green-border); color: #0D652D; }
@@ -131,8 +132,8 @@
         <span class="dot" style="background:#34A853"></span>
       </div>
       <div>
-        <div class="brand-title">ShopFloor AI <span style="font-weight:500;color:var(--text-sec);font-size:13px">by Veloter Software Lab</span></div>
-        <div class="brand-sub">Offline-First CNC Quality Inspection &amp; BigQuery Analytics • Powered by MobileAIFramework</div>
+        <div class="brand-title">MobileAIFramework <span style="font-weight:500;color:var(--text-sec);font-size:13px">| ShopFloor AI</span></div>
+        <div class="brand-sub">Offline-First Edge-Cloud Hybrid AI, Document-to-BigQuery Tables &amp; CNC Quality Analytics</div>
       </div>
     </div>
     <div class="header-badges">
@@ -146,9 +147,9 @@
 <section class="hero">
   <div class="hero-card">
     <div>
-      <h1>Scan CNC Dimension Reports Offline → Auto-Update BigQuery QC DB &amp; Catch Scrap Before Shift End</h1>
+      <h1>Scan Documents &amp; CNC Inspection Reports Offline → Live BigQuery Tables &amp; Quality Analytics</h1>
       <p>
-        Built by an ex-L&amp;T Heavy Engineering Quality Engineer: shop-floor inspectors scan part tags &amp; inspection sheets using <strong>Offline ML Kit Lens OCR + on-device Gemma</strong> inside steel bays, sync structured measurements to <strong>Google BigQuery</strong> via <strong>Cloud Run</strong>, and query/update production projects in plain English with <strong>Google Gemini</strong> — cutting cloud AI spend by <strong>60–80%</strong>.
+        Capture printed sheets or messy handwritten notes using <strong>Offline ML Kit Lens OCR + on-device Google Gemma 2 2B</strong> in zero-signal environments, sync structured tables to <strong>Google BigQuery</strong> via <strong>Cloud Run</strong>, and query or update production records in plain English with <strong>Gemini 2.5 Flash</strong> while cutting cloud AI spend by <strong>60-80%</strong>.
       </p>
     </div>
     <div class="hero-kpis">
@@ -186,15 +187,15 @@
   <section id="tab-doctables" class="tab-panel active">
     <div class="card">
       <h2>📄 Scan ANY Document (Handwritten or Printed) → Dynamic Tabular Database <span class="pill blue" style="font-size:11px">Schema-Agnostic BigQuery</span></h2>
-      <div class="card-sub">Every scanned page can have completely different columns &amp; structure — invoices, messy handwritten logs, checklists, lab sheets, BOMs, or shop-floor notes. Synced live from the Android Lens Doc Scanner.</div>
+      <div class="card-sub">Every scanned page can have completely different columns &amp; structure: invoices, messy handwritten logs, checklists, lab sheets, BOMs, or shop-floor notes. Synced live from the Android Lens Doc Scanner.</div>
 
       <label class="upload-zone" for="docTableFile">
-        📸 Click to Upload ANY Document or Handwritten Note Photo (Gemini 2.5 Flash Vision → Dynamic Table)
+        <span>📸 Click to Upload ANY Document or Handwritten Note Photo (Gemini 2.5 Flash Vision → Dynamic Table)</span>
         <input type="file" id="docTableFile" accept="image/*" style="display:none" onchange="onDocTableImagePicked(event)" />
-        <div id="docPickedName" style="font-size:11px;color:var(--text-sec);margin-top:4px;font-weight:500;">Or paste rough handwritten/printed text below and click Convert → Save</div>
+        <div id="docPickedName" style="font-size:11.5px;color:var(--text-sec);font-weight:500;">Or paste rough handwritten/printed text below and click Convert → Save</div>
       </label>
 
-      <textarea id="docTableText" rows="3" placeholder="Paste any rough notes, table, invoice, or checklist...">Item | Qty | Rate | Status
+      <textarea id="docTableText" rows="4" placeholder="Paste any rough notes, table, invoice, or checklist...">Item | Qty | Rate | Status
 M12 Hex Bolts | 150 | 12 INR | Received
 Bearing 6205-2RS | 24 | 310 INR | Pending
 Shaft Seal 50mm | 10 | 450 INR | Checked OK</textarea>
@@ -221,9 +222,9 @@ Shaft Seal 50mm | 10 | 450 INR | Checked OK</textarea>
         <div class="card-sub">Upload a blueprint/report photo, pick a realistic machining tag, or paste OCR from the Android Lens tab to auto-parse &amp; insert into BigQuery.</div>
 
         <label class="upload-zone" for="qcImageFile">
-          📸 Click to Upload Inspection Sheet / Vernier / Blueprint Photo (Gemini Vision)
+          <span>📸 Click to Upload Inspection Sheet / Vernier / Blueprint Photo (Gemini Vision)</span>
           <input type="file" id="qcImageFile" accept="image/*" style="display:none" onchange="onImagePicked(event)" />
-          <div id="pickedImgName" style="font-size:11px;color:var(--text-sec);margin-top:4px;font-weight:500;">Or test instant sample OCR scans below ↓</div>
+          <div id="pickedImgName" style="font-size:11.5px;color:var(--text-sec);font-weight:500;">Or test instant sample OCR scans below ↓</div>
         </label>
 
         <div class="chips-wrap">
@@ -244,7 +245,7 @@ Shaft Seal 50mm | 10 | 450 INR | Checked OK</textarea>
 
       <!-- RIGHT: AI COPILOT FOR QUERY & UPDATE -->
       <div class="card">
-        <h2>🤖 ShopFloor AI Copilot — Query &amp; Update Data <span class="pill blue" style="font-size:11px">Gemini + BigQuery</span></h2>
+        <h2>🤖 ShopFloor AI Copilot: Query &amp; Update Data <span class="pill blue" style="font-size:11px">Gemini + BigQuery</span></h2>
         <div class="card-sub">Ask quality analytics questions OR issue natural-language updates to modify project inspection records in real time.</div>
 
         <div class="chips-wrap">
@@ -429,7 +430,7 @@ Shaft Seal 50mm | 10 | 450 INR | Checked OK</textarea>
 </main>
 
 <footer>
-  ShopFloor AI (Powered by MobileAIFramework) • Built by Kalpit Rathod (Veloter Software Lab) for Google DeepMind | Google Cloud Startup Buildathon India 2026
+  MobileAIFramework | ShopFloor AI • Built by Kalpit Rathod for Google DeepMind | Google Cloud Startup Buildathon India 2026
 </footer>
 
 <script>
